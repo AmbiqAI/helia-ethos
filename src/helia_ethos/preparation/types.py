@@ -214,7 +214,7 @@ class PackageVersion(RecordValue):
 class PreparationRecord(RecordValue):
     """Versioned compilation evidence; not a measurement or execution bundle."""
 
-    schema_version: Literal[1, 2] = 2
+    schema_version: Literal[1, 2] = 1
     npu_requirement: NpuRequirement = NpuRequirement.REQUIRED
     source_sha256: Sha256
     target: TargetEvidence

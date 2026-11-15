@@ -462,17 +462,20 @@ def test_cpu_only_policy_and_retained_record(request_model: PrepareRequest, tmp_
         inspect_prepared_model(relocated / "preparation.json")
 
 
-def test_version_one_record_remains_npu_required(request_model: PrepareRequest) -> None:
+@pytest.mark.parametrize("omit_version", [False, True])
+def test_version_one_record_remains_npu_required(request_model: PrepareRequest, omit_version: bool) -> None:
     """Version-one records remain readable under their original strict NPU contract."""
     prepared = prepare_model(request_model)
     data = json.loads(prepared.record_path.read_text())
     data["schema_version"] = 1
     del data["npu_requirement"]
+    if omit_version:
+        del data["schema_version"]
     prepared.record_path.write_text(json.dumps(data))
     inspected = inspect_prepared_model(prepared.record_path)
     assert inspected.regions and inspected.record is not None
     assert "npu_requirement" not in inspected.record.model_dump()
-    assert json.loads(inspected.record.model_dump_json()) == data
+    assert json.loads(inspected.record.model_dump_json()) == {**data, "schema_version": 1}
     data["npu_requirement"] = "optional"
     prepared.record_path.write_text(json.dumps(data))
     with pytest.raises(InvalidPreparedArtifact, match="version 1 requires"):

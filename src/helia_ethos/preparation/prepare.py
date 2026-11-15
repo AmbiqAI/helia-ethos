@@ -306,6 +306,7 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
                 allow_nan=False,
             )
             record = PreparationRecord(
+                schema_version=2,
                 npu_requirement=request.npu_requirement,
                 source_sha256=source_info.sha256,
                 target=target,
