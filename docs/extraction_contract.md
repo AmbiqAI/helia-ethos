@@ -1,8 +1,8 @@
 # helia-ethos extraction and model-preparation contract
 
-Status: proposed. This document defines the next implementation steps; the new
-API names below are not shipped interfaces. The existing low-level APIs remain
-available. Approval of this contract does not claim that another product has
+Status: approved design baseline. The standalone extraction is merged; see
+[preparation.md](preparation.md) for the implemented preparation surface and examples.
+The existing low-level APIs remain available. Approval of this contract does not claim that another product has
 implemented or accepted its adoption work.
 
 ## Objective
@@ -12,8 +12,8 @@ the same model using explicit target and compiler settings. Each product remains
 independently useful and owns its execution. BENCH orchestrates those products;
 it does not become the compiler or require a particular producer architecture.
 
-No runtime behavior, public API, dependency or result schema changes in this PR.
-No new repository or release is created by it.
+The original HELX contract PR was documentation-only. This document preserves
+its ownership and adoption plan; subsequent implementation is tracked separately.
 
 ## Ownership
 
