@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 import textwrap
@@ -16,11 +17,11 @@ def test_core_needs_no_flatbuffer_library() -> None:
         """
         import sys
         sys.modules["ai_edge_litert"] = None  # make the import fail as if the extra were absent
-        import helia_npu
-        from helia_npu.vela import compile_for_target, write_system_config, LayerRow, parse_verbose_performance
-        soc = helia_npu.load_soc("atomiq110")
-        timing = helia_npu.derive_timing(soc, "ULP")
-        print(soc.id, timing.memories["ssram"].read_latency, helia_npu.VelaMemoryMode("shared_sram").value)
+        import helia_ethos
+        from helia_ethos.vela import compile_for_target, write_system_config, LayerRow, parse_verbose_performance
+        soc = helia_ethos.load_soc("atomiq110")
+        timing = helia_ethos.derive_timing(soc, "ULP")
+        print(soc.id, timing.memories["ssram"].read_latency, helia_ethos.VelaMemoryMode("shared_sram").value)
         """
     )
     assert result.returncode == 0, result.stderr
@@ -32,27 +33,27 @@ def test_the_models_extra_is_named_when_missing() -> None:
         """
         import sys
         sys.modules["ai_edge_litert"] = None
-        import helia_npu
+        import helia_ethos
         from pathlib import Path
         try:
-            from helia_npu.vela import read_tflite_graph
+            from helia_ethos.vela import read_tflite_graph
             read_tflite_graph(Path("x.tflite"))
         except ImportError as exc:
             print(exc)
         for name, call in (
-            ("command_stream_bytes", lambda: helia_npu.command_stream_bytes(Path("x.tflite"))),
-            ("characterize_model", lambda: helia_npu.characterize_model(Path("x.tflite"))),
-            ("fence_model", lambda: helia_npu.fence_model(Path("x.tflite"), [], Path("out"))),
+            ("command_stream_bytes", lambda: helia_ethos.command_stream_bytes(Path("x.tflite"))),
+            ("characterize_model", lambda: helia_ethos.characterize_model(Path("x.tflite"))),
+            ("fence_model", lambda: helia_ethos.fence_model(Path("x.tflite"), [], Path("out"))),
         ):
             try:
                 call()
             except ImportError as exc:
-                print(name, "names the extra:", "helia-npu[models]" in str(exc))
-        print("dir:", "fence_model" in dir(helia_npu), "star:", "fence_model" not in helia_npu.__all__)
+                print(name, "names the extra:", "helia-ethos[models]" in str(exc))
+        print("dir:", "fence_model" in dir(helia_ethos), "star:", "fence_model" not in helia_ethos.__all__)
         """
     )
     assert result.returncode == 0, result.stderr
-    assert "pip install 'helia-npu[models]'" in result.stdout
+    assert "pip install 'helia-ethos[models]'" in result.stdout
     for name in ("command_stream_bytes", "characterize_model", "fence_model"):
         assert f"{name} names the extra: True" in result.stdout, result.stdout
     assert "dir: True star: True" in result.stdout
@@ -61,9 +62,9 @@ def test_the_models_extra_is_named_when_missing() -> None:
 def test_version_is_single_sourced() -> None:
     from importlib.metadata import version
 
-    import helia_npu
+    import helia_ethos
 
-    assert version("helia-npu") == helia_npu.__version__
+    assert version("helia-ethos") == helia_ethos.__version__
 
 
 def test_the_suite_collects_on_a_core_only_install(tmp_path) -> None:
@@ -86,7 +87,7 @@ def test_the_suite_collects_on_a_core_only_install(tmp_path) -> None:
         capture_output=True,
         text=True,
         check=False,
-        env={"PYTHONPATH": str(tmp_path), "PATH": "/usr/bin:/bin"},
+        env={**os.environ, "PYTHONPATH": str(tmp_path)},
         cwd=tests.parent,
     )
     assert result.returncode == 0, result.stdout + result.stderr

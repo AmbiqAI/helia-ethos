@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from helia_npu.fvp import NpuFamily, required_pmu_fields, resolve_fvp_target_profile
-from helia_npu.pmu import PmuUnit, list_programs, program_for, render_c_header, slot_count
+from helia_ethos.fvp import NpuFamily, required_pmu_fields, resolve_fvp_target_profile
+from helia_ethos.pmu import PmuUnit, list_programs, program_for, render_c_header, slot_count
 
 
 class TestPrograms:
@@ -82,7 +82,7 @@ class TestIdentityAndAcquisition:
 
     def test_acquisition_is_recorded_per_consumer(self) -> None:
         """Width, place and unit of accumulation and the overflow scope belong to the consumer, not the events."""
-        from helia_npu.pmu import AccumulationSite, OverflowScope
+        from helia_ethos.pmu import AccumulationSite, OverflowScope
 
         program = program_for(NpuFamily.ETHOS_U85)
         assert (program.event_counter_bits, program.cycle_counter.bits) == (32, 64)
@@ -109,7 +109,7 @@ class TestIdentityAndAcquisition:
         """Equal ordered events identify the program; comparable numbers also need the same acquisition."""
         from dataclasses import replace
 
-        from helia_npu.pmu import HELX_RUNNER_ACQUISITION
+        from helia_ethos.pmu import HELX_RUNNER_ACQUISITION
 
         hpx = program_for(NpuFamily.ETHOS_U85, "hpx_default_v1")
         as_helx_would_read_it = replace(hpx, acquisition=HELX_RUNNER_ACQUISITION)
@@ -129,7 +129,7 @@ class TestIdentityAndAcquisition:
         assert not default.same_program_as(program_for(NpuFamily.ETHOS_U85, "default_ext_rd_stall"))
 
     def test_hpx_default_is_a_named_program_with_an_event_slot_cycle_counter(self) -> None:
-        from helia_npu.pmu import CycleSource
+        from helia_ethos.pmu import CycleSource
 
         hpx = program_for(NpuFamily.ETHOS_U85, "hpx_default_v1")
         assert hpx.id == "hpx/ethos-u85/hpx_default_v1/v1"
@@ -151,7 +151,7 @@ class TestIdentityAndAcquisition:
         assert len(hpx.slots) == 4
 
     def test_a_cycle_slot_must_declare_its_source(self) -> None:
-        from helia_npu.pmu import PmuProgram, PmuSlot, PmuUnit
+        from helia_ethos.pmu import PmuProgram, PmuSlot, PmuUnit
 
         with pytest.raises(ValueError, match=r"cycle_counter\.source is not event_slot"):
             PmuProgram(

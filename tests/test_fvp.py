@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from helia_npu.fvp import (
+from helia_ethos.fvp import (
     required_pmu_fields,
     resolve_fvp_target_profile,
     validate_fvp_memory_mode,

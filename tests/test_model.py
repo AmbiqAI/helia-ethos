@@ -10,7 +10,7 @@ import pytest
 pytest.importorskip("ai_edge_litert", reason="needs the models extra")
 
 from conftest import COMMAND_STREAM_BYTES, CONV_BIAS_BYTES, CONV_WEIGHT_BYTES
-from helia_npu.model import characterize_model, command_stream_bytes
+from helia_ethos.model import characterize_model, command_stream_bytes
 
 
 class TestCharacterizeModel:
@@ -68,7 +68,7 @@ class TestCommandStreamBytes:
 
 
 def test_model_io_preserves_concrete_shapes_and_storage(conv_model: Path):
-    from helia_npu.model import model_io
+    from helia_ethos.model import model_io
 
     inputs, outputs = model_io(conv_model)
     assert [(t.index, t.dtype, t.shape) for t in inputs] == [(0, "int8", (1, 4, 4, 2))]

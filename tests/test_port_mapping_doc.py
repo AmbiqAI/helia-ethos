@@ -5,10 +5,10 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from helia_npu.fvp import FvpSubsystem, NpuFamily, resolve_fvp_target_profile
-from helia_npu.pmu import list_programs, program_for
-from helia_npu.soc import AXI_PATTERN_TO_VELA_MODE, VELA_AXI_NAME, VELA_PORT_TYPE
-from helia_npu.soc_schema import load_soc
+from helia_ethos.fvp import FvpSubsystem, NpuFamily, resolve_fvp_target_profile
+from helia_ethos.pmu import list_programs, program_for
+from helia_ethos.soc import AXI_PATTERN_TO_VELA_MODE, VELA_AXI_NAME, VELA_PORT_TYPE
+from helia_ethos.soc_schema import load_soc
 
 DOC = Path(__file__).resolve().parents[1] / "docs" / "port_mapping.md"
 

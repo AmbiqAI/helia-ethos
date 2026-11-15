@@ -1,5 +1,5 @@
 [project]
-name = "helia-npu"
+name = "helia-ethos"
 dynamic = ["version"]
 description = "Ethos-U NPU support for the helia toolchain: SoC definitions with provenance, Vela compilation for a SoC and operating point, PMU programs, model inspection and graph fencing."
 readme = "README.md"
@@ -27,8 +27,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# Reading and rewriting .tflite files: helia_npu.model, helia_npu.fencing,
-# helia_npu.vela.read_tflite_graph.
+# Reading and rewriting .tflite files: helia_ethos.model, helia_ethos.fencing,
+# helia_ethos.vela.read_tflite_graph.
 models = [
     "ai-edge-litert>=2.1.6,<2.3",
     # LiteRT declares this unconditionally; 1.3+ excludes our Python versions.
@@ -36,36 +36,35 @@ models = [
 ]
 # The Vela compiler itself, for compile_for_target and invoke_vela.
 vela = ["ethos-u-vela>=5.2.0"]
-all = ["helia-npu[models,vela]"]
+all = ["helia-ethos[models,vela]"]
 
 [project.urls]
-Repository = "https://github.com/AmbiqAI/helia-estimator"
-Documentation = "https://github.com/AmbiqAI/helia-estimator/tree/main/packages/helia-npu"
-Changelog = "https://github.com/AmbiqAI/helia-estimator/blob/main/packages/helia-npu/CHANGELOG.md"
+Repository = "https://github.com/AmbiqAI/helia-ethos"
+Documentation = "https://github.com/AmbiqAI/helia-ethos"
+Changelog = "https://github.com/AmbiqAI/helia-ethos/blob/main/CHANGELOG.md"
 
-# The package must be testable on its own: it moves to its own repository once
-# its API settles. The suite needs both extras.
+# The development suite exercises both optional extras.
 [dependency-groups]
-dev = ["pytest>=7.0.0", "ruff>=0.14", "ty>=0.0.1a21", "helia-npu[all]"]
+dev = ["pytest>=7.0.0", "ruff>=0.14", "ty>=0.0.1a21", "helia-ethos[all]"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/helia_npu/__init__.py"
+path = "src/helia_ethos/__init__.py"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/helia_npu"]
+packages = ["src/helia_ethos"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"NOTICE" = "helia_npu/NOTICE"
+"NOTICE" = "helia_ethos/NOTICE"
 
 [tool.hatch.build]
-include = ["/src/helia_npu/**/*.py", "/src/helia_npu/**/*.yaml", "/src/helia_npu/py.typed"]
+include = ["/src/helia_ethos/**/*.py", "/src/helia_ethos/**/*.yaml", "/src/helia_ethos/py.typed"]
 
 [tool.hatch.build.targets.sdist]
-include = ["/src", "/tests", "/docs", "/CHANGELOG.md", "/LICENSE", "/NOTICE", "/README.md", "/pyproject.toml"]
+include = ["/src", "/tests", "/docs", "/CHANGELOG.md", "/LICENSE", "/NOTICE", "/README.md", "/pyproject.toml", "/scripts", "/uv.lock"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -82,7 +81,7 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 "tests/**" = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["helia_npu"]
+known-first-party = ["helia_ethos"]
 
 [tool.ty.environment]
 python-version = "3.11"
@@ -91,7 +90,7 @@ python-version = "3.11"
 include = ["src", "tests"]
 
 [[tool.ty.overrides]]
-include = ["src/helia_npu/fencing.py", "tests/test_fencing.py", "tests/conftest.py"]
+include = ["src/helia_ethos/fencing.py", "tests/test_fencing.py", "tests/conftest.py"]
 
 # ai_edge_litert's generated flatbuffer classes ship no annotations; the fencing
 # module guards at its entry points instead.

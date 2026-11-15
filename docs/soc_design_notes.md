@@ -1,6 +1,6 @@
 # Design constraints for the SoC model
 
-What the SoC definition in `helia_npu.soc` is built to honour.
+What the SoC definition in `helia_ethos.soc` is built to honour.
 
 ## Golden definitions vs what-ifs are different things
 

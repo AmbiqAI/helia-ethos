@@ -1,0 +1,53 @@
+name: Release
+on:
+  push:
+    branches: [main]
+concurrency:
+  group: release
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      created: ${{ steps.release.outputs.release_created }}
+      sha: ${{ steps.release.outputs.sha }}
+      tag: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
+  publish:
+    needs: version
+    if: needs.version.outputs.created == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version.outputs.sha }}
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: '0.13.5'
+          python-version: '3.12'
+      - run: uv sync --frozen
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+        run: uv run --frozen python -c "import os, helia_ethos; assert os.environ['RELEASE_TAG'] == 'v' + helia_ethos.__version__"
+      - run: uv run --frozen python scripts/gates.py
+      - run: uv run --frozen python scripts/check_distribution.py
+      - uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Attach tested distributions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+        run: gh release upload "$RELEASE_TAG" dist/*

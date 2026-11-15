@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from helia_npu.vela import (
+from helia_ethos.vela import (
     TFLiteOp,
     index_by_output_name,
     match_original_op,
@@ -91,7 +91,8 @@ class TestMatchOriginalOp:
 def test_read_tflite_graph_rejects_unsupported_subgraph_scope(conv_model: Path, count: int) -> None:
     from ai_edge_litert.tools import flatbuffer_utils
 
-    model = flatbuffer_utils.read_model(str(conv_model))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(conv_model.read_bytes())
     assert model.subgraphs is not None
     model.subgraphs = model.subgraphs * count
     flatbuffer_utils.write_model(model, str(conv_model))

@@ -14,7 +14,7 @@ from ai_edge_litert import schema_py_generated as schema
 from ai_edge_litert.tools import flatbuffer_utils
 
 from conftest import INT8, _buffer, _tensor, write_add_chain_model
-from helia_npu.fencing import (
+from helia_ethos.fencing import (
     Fence,
     FenceBindingError,
     FenceBoundaries,
@@ -35,7 +35,7 @@ from helia_npu.fencing import (
     plan_fences,
     rewrite_model_with_fences,
 )
-from helia_npu.vela import LayerRow, TFLiteOp, read_tflite_graph
+from helia_ethos.vela import LayerRow, TFLiteOp, read_tflite_graph
 
 
 def _row(name: str, op_cycles: int) -> LayerRow:
@@ -213,7 +213,8 @@ class TestPlanBinding:
 
 
 def _with_existing_stream_split_opcode(path: Path, *, builtin: int, deprecated: int, version: int) -> Path:
-    model = flatbuffer_utils.read_model(str(path))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(path.read_bytes())
     oc = schema.OperatorCodeT()
     oc.customCode = b"ETHOS_U_STREAM_SPLIT"
     oc.builtinCode, oc.deprecatedBuiltinCode, oc.version = builtin, deprecated, version
@@ -275,7 +276,8 @@ class TestExistingStreamSplitOpcode:
 def test_rewrite_rejects_a_model_with_more_than_one_subgraph(tmp_path: Path) -> None:
     """Contract v1 covers subgraph 0 of a single-subgraph model; nothing is written for anything else."""
     model_path = write_add_chain_model(tmp_path / "chain.tflite", num_ops=3)
-    model = flatbuffer_utils.read_model(str(model_path))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(model_path.read_bytes())
     model.subgraphs.append(copy.deepcopy(model.subgraphs[0]))
     multi_path = tmp_path / "multi.tflite"
     flatbuffer_utils.write_model(model, str(multi_path))
@@ -579,7 +581,8 @@ def test_a_compiled_model_not_cut_by_the_sidecar_is_refused(tmp_path: Path, opco
 def test_a_fence_after_an_unnamed_tensor_carries_the_name_the_sidecar_records(tmp_path: Path) -> None:
     # Two unnamed outputs: each fence must still be findable by name, and the two names must differ.
     model_path = write_add_chain_model(tmp_path / "unnamed.tflite", num_ops=3)
-    model = flatbuffer_utils.read_model(str(model_path))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(model_path.read_bytes())
     model.subgraphs[0].tensors[1].name = b""
     model.subgraphs[0].tensors[2].name = b""
     flatbuffer_utils.write_model(model, str(model_path))
@@ -599,7 +602,8 @@ def test_a_fence_after_an_unnamed_tensor_carries_the_name_the_sidecar_records(tm
 def test_cut_carries_residual_and_multiple_outputs_across_successive_fences(tmp_path: Path) -> None:
     """All live produced values cross each cut; constants and graph inputs remain available directly."""
     path = write_add_chain_model(tmp_path / "residual.tflite", num_ops=4)
-    model = flatbuffer_utils.read_model(str(path))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(path.read_bytes())
     graph = model.subgraphs[0]
     early = int(graph.operators[0].outputs[0])
     middle = int(graph.operators[1].outputs[0])
@@ -637,7 +641,8 @@ def test_cut_carries_residual_and_multiple_outputs_across_successive_fences(tmp_
 @pytest.mark.parametrize("dtype", [schema.TensorType.INT16, schema.TensorType.FLOAT16])
 def test_fence_preserves_extended_tensor_storage(tmp_path: Path, dtype: int) -> None:
     path = write_add_chain_model(tmp_path / "typed.tflite", num_ops=3)
-    model = flatbuffer_utils.read_model(str(path))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(path.read_bytes())
     graph = model.subgraphs[0]
     graph.tensors[graph.operators[0].outputs[0]].type = dtype
     flatbuffer_utils.write_model(model, str(path))
@@ -651,7 +656,8 @@ def test_fence_preserves_extended_tensor_storage(tmp_path: Path, dtype: int) -> 
 def test_named_signatures_follow_early_outputs_through_multiple_cuts(tmp_path: Path) -> None:
     """Named results and subgraph outputs retain the same values after all fence rewrites."""
     path = write_add_chain_model(tmp_path / "signatures.tflite", num_ops=4)
-    model = flatbuffer_utils.read_model(str(path))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(path.read_bytes())
     graph = model.subgraphs[0]
     early = int(graph.operators[0].outputs[0])
     final = int(graph.outputs[0])
@@ -689,7 +695,8 @@ def test_unrelated_resource_ops_with_absent_vectors_do_not_break_cut(
 ) -> None:
     """A dense cut before a zero-input handle or after a zero-output assignment remains valid."""
     path = write_add_chain_model(tmp_path / "resource.tflite", num_ops=3)
-    model = flatbuffer_utils.read_model(str(path))
+    # Own the bytes: these fixture edits may overwrite the file on Windows.
+    model = flatbuffer_utils.read_model_from_bytearray(path.read_bytes())
     graph = model.subgraphs[0]
     resource = schema.TensorT()
     resource.name, resource.type, resource.shape = b"handle", schema.TensorType.RESOURCE, []

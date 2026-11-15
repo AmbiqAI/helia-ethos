@@ -3,8 +3,8 @@
 The core, using pydantic, PyYAML and helia-platforms: SoC and target definitions,
 timing derivation, the Vela system config and compile driver, the FVP target
 matrix and the PMU programs. Reading or rewriting a ``.tflite`` file
-(:mod:`helia_npu.model`, :mod:`helia_npu.fencing`,
-:func:`helia_npu.vela.read_tflite_graph`) needs the ``models`` extra; those
+(:mod:`helia_ethos.model`, :mod:`helia_ethos.fencing`,
+:func:`helia_ethos.vela.read_tflite_graph`) needs the ``models`` extra; those
 names are imported on first use so the core imports without it.
 """
 
@@ -83,10 +83,10 @@ if TYPE_CHECKING:  # the names resolved by __getattr__, visible to type checkers
     )
     from .model import ModelCharacterization, characterize_model, command_stream_bytes  # noqa: F401
 
-__version__ = "0.1.0"
+__version__ = "0.1.0"  # x-release-please-version
 
 #: Names behind the ``models`` extra, resolved on first use; kept out of ``__all__`` so
-#: ``from helia_npu import *`` works on a core-only install.
+#: ``from helia_ethos import *`` works on a core-only install.
 _FENCING = {
     "Fence",
     "FenceBindingError",

@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from helia_npu.soc_schema import load_soc
-from helia_npu.vela import VelaColumn, VelaError, compile_for_target, find_vela_binary
+from helia_ethos.soc_schema import load_soc
+from helia_ethos.vela import VelaColumn, VelaError, compile_for_target, find_vela_binary
 
 
 def _no_vela() -> bool:

@@ -10,5 +10,5 @@ def litert_schema() -> ModuleType:
     try:
         from ai_edge_litert import schema_py_generated
     except ImportError as exc:
-        raise ImportError("reading .tflite files needs the 'models' extra: pip install 'helia-npu[models]'") from exc
+        raise ImportError("reading .tflite files needs the 'models' extra: pip install 'helia-ethos[models]'") from exc
     return schema_py_generated

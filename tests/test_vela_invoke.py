@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from helia_npu.fvp import NpuFamily
-from helia_npu.vela import VelaError, VelaInvocation, accelerator_config, find_vela_binary, invoke_vela, vela_command
+from helia_ethos.fvp import NpuFamily
+from helia_ethos.vela import VelaError, VelaInvocation, accelerator_config, find_vela_binary, invoke_vela, vela_command
 
 
 class TestAcceleratorConfig:
@@ -115,14 +115,14 @@ class TestCommandLine:
             "vela",
             "--accelerator-config=ethos-u85-256",
             "--config",
-            "/cfg/vela_config.ini",
+            str(Path("/cfg/vela_config.ini")),
             "--system-config",
             "atomiq110_ULP",
             "--memory-mode",
             "Shared_Sram",
-            "/m/kws.tflite",
+            str(Path("/m/kws.tflite")),
             "--output-dir",
-            "/out",
+            str(Path("/out")),
             "--arena-cache-size",
             "1048576",
             "--enable-debug-db",
