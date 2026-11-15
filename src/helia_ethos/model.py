@@ -127,9 +127,7 @@ def characterize_model(tflite_path: Path) -> ModelCharacterization:
     op_codes: list[int] = []
     for i in range(model.OperatorCodesLength()):
         oc = model.OperatorCodes(i)
-        code = oc.BuiltinCode()
-        if code == 0:
-            code = oc.DeprecatedBuiltinCode()
+        code = max(oc.BuiltinCode(), oc.DeprecatedBuiltinCode())
         op_codes.append(code)
 
     # Accumulate across ALL subgraphs
@@ -165,8 +163,10 @@ def characterize_model(tflite_path: Path) -> ModelCharacterization:
             if opcode in _weight_bearing_ops():
                 if op.InputsLength() >= 2:
                     weight_indices.add(op.Inputs(1))
-                if op.InputsLength() >= 3 and op.Inputs(2) != -1:
-                    bias_indices.add(op.Inputs(2))
+                # TRANSPOSE_CONV inserts output_shape before weights/input/bias.
+                bias_slot = 3 if opcode == schema.BuiltinOperator.TRANSPOSE_CONV else 2
+                if op.InputsLength() > bias_slot and op.Inputs(bias_slot) != -1:
+                    bias_indices.add(op.Inputs(bias_slot))
 
         # I/O tensor indices for this subgraph (excluded from constant counting)
         input_indices = set(sg.Inputs(i) for i in range(sg.InputsLength()))
