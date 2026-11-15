@@ -85,7 +85,7 @@ def _target(request: PrepareRequest) -> tuple[Accelerator, TargetEvidence]:
     if any(not math.isfinite(m.bandwidth) or m.bandwidth <= 0 for m in timing.memories.values()):
         raise InvalidPreparation("settings.soc requires positive finite memory bandwidth")
     # Resolve all requested memory names; selection never depends on catalog order.
-    settings.soc.placement_axi_ports(settings.placement)
+    settings.soc.validate_placement(settings.placement)
     return accelerator, evidence
 
 
@@ -115,8 +115,11 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
             raise InvalidPreparation(
                 f"{source}: already contains ETHOS_U_STREAM_SPLIT; importing fences is unsupported"
             )
-        ops = read_tflite_graph(source)
         selection = request.fences
+        needs_graph = isinstance(selection, BudgetFences) or (
+            isinstance(selection, ExplicitFences) and bool(selection.boundaries)
+        )
+        ops = read_tflite_graph(source) if needs_graph else []
         if isinstance(selection, ExplicitFences):
             if len(set(selection.boundaries)) != len(selection.boundaries) or any(
                 type(i) is not int or not 0 <= i < len(ops) - 1 for i in selection.boundaries
@@ -311,9 +314,10 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
             pending = root / "pending.json"
             pending.write_text(record.model_dump_json(indent=2), encoding="utf-8")
             validated = inspect_prepared_model(pending)
-            record_path = root / "preparation.json"
-            pending.rename(record_path)
-            return PreparedModel(compiled.tflite, record_path, validated)
+        # Scratch cleanup must succeed before a success record becomes visible.
+        record_path = root / "preparation.json"
+        pending.rename(record_path)
+        return PreparedModel(compiled.tflite, record_path, validated)
     except Exception as exc:
         (root / "pending.json").unlink(missing_ok=True)
         (root / "failure.txt").write_text(str(exc), encoding="utf-8")

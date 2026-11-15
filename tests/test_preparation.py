@@ -290,3 +290,45 @@ def test_reader_needs_no_vela(request_model: PrepareRequest, monkeypatch) -> Non
 
     monkeypatch.setattr("subprocess.run", forbidden)
     assert inspect_prepared_model(prepared.record_path).sha256 == prepared.info.sha256
+
+
+def test_unfenced_multisubgraph_source(request_model: PrepareRequest) -> None:
+    import copy
+
+    from ai_edge_litert.tools import flatbuffer_utils
+
+    model: Any = flatbuffer_utils.read_model_from_bytearray(request_model.source.read_bytes())
+    additional = copy.deepcopy(model.subgraphs[0])
+    additional.name = b"secondary"
+    model.subgraphs.append(additional)
+    flatbuffer_utils.write_model(model, str(request_model.source))
+    prepared = prepare_model(request_model)
+    assert {region.subgraph for region in prepared.info.regions} == {0, 1}
+    assert prepared.info.compatibility(Accelerator(NpuFamily.ETHOS_U85, 256)) == AcceleratorCompatibility.COMPATIBLE
+
+
+def test_cleanup_failure_does_not_publish_success(request_model: PrepareRequest, monkeypatch) -> None:
+    import tempfile
+    from contextlib import contextmanager
+
+    original = tempfile.TemporaryDirectory
+
+    @contextmanager
+    def failed_cleanup(*args, **kwargs):
+        with original(*args, **kwargs) as directory:
+            yield directory
+        raise OSError("cleanup failed deliberately")
+
+    monkeypatch.setattr("tempfile.TemporaryDirectory", failed_cleanup)
+    with pytest.raises(CompilationFailed, match="cleanup failed"):
+        prepare_model(request_model)
+    assert not (request_model.output_dir / "preparation.json").exists()
+    assert not (request_model.output_dir / "pending.json").exists()
+    assert (request_model.output_dir / "failure.txt").exists()
+
+
+def test_conflicting_placement_is_an_input_error(request_model: PrepareRequest) -> None:
+    settings = replace(request_model.settings, placement=MemoryPlacement("hblram", "rram", "ssram"))
+    with pytest.raises(InvalidPreparation, match="memory_placement"):
+        prepare_model(replace(request_model, settings=settings))
+    assert not request_model.output_dir.exists()
