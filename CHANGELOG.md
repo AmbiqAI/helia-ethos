@@ -3,6 +3,13 @@
 All notable changes to helia-npu. The package follows semantic versioning once
 it reaches 1.0; until then a minor bump may change an API.
 
+## [0.2.1](https://github.com/AmbiqAI/helia-ethos/compare/v0.2.0...v0.2.1) (2026-11-15)
+
+
+### Bug Fixes
+
+* keep public preparation imports offline ([#6](https://github.com/AmbiqAI/helia-ethos/issues/6)) ([984889c](https://github.com/AmbiqAI/helia-ethos/commit/984889c160d0718e9a0da5fefd8a829bcf89100c))
+
 ## [0.2.0](https://github.com/AmbiqAI/helia-ethos/compare/v0.1.0...v0.2.0) (2026-11-15)
 
 
