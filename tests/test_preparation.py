@@ -332,3 +332,43 @@ def test_conflicting_placement_is_an_input_error(request_model: PrepareRequest) 
     with pytest.raises(InvalidPreparation, match="memory_placement"):
         prepare_model(replace(request_model, settings=settings))
     assert not request_model.output_dir.exists()
+
+
+@pytest.mark.parametrize("memory", ["srram", "SSRAM"])
+def test_unknown_timing_override_is_refused(request_model: PrepareRequest, memory: str) -> None:
+    from helia_ethos import MemoryTimingOverride, TimingOverrides
+
+    settings = replace(
+        request_model.settings, timing_overrides=TimingOverrides({memory: MemoryTimingOverride(bandwidth=0.5)})
+    )
+    with pytest.raises(InvalidPreparation, match="unknown keys"):
+        prepare_model(replace(request_model, settings=settings))
+    assert not request_model.output_dir.exists()
+
+
+@pytest.mark.parametrize("failure", ["exit", "missing_summary", "invalid_summary"])
+def test_compiler_diagnostics_survive_failure(request_model: PrepareRequest, monkeypatch, failure: str) -> None:
+    import subprocess
+
+    implementation = importlib.import_module("helia_ethos.preparation.prepare")
+    invoke_original = implementation.invoke_vela
+
+    def failed(vela, invocation, input_path, output_path):
+        def runner(*args, **kwargs):
+            if failure == "exit":
+                raise subprocess.CalledProcessError(
+                    2, args[0], output="early stdout\n", stderr="first error\n" + "later\n" * 10
+                )
+            if failure == "invalid_summary":
+                summary = output_path / f"{input_path.stem}_summary_{invocation.system_config}.csv"
+                summary.write_text("", encoding="utf-8")
+            return subprocess.CompletedProcess(args[0], 0, "early stdout\n", "first error\n")
+
+        return invoke_original(vela, invocation, input_path, output_path, runner=runner)
+
+    monkeypatch.setattr(implementation, "invoke_vela", failed)
+    with pytest.raises(CompilationFailed):
+        prepare_model(request_model)
+    log = (request_model.output_dir / "compiled/compiler.log").read_text()
+    assert "early stdout" in log and "first error" in log
+    assert not (request_model.output_dir / "preparation.json").exists()

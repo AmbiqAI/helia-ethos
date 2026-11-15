@@ -20,6 +20,7 @@ from ..catalog_identity import CatalogContentIdentity
 from ..soc import NpuFamily, SocError, derive_timing
 from ..vela import VelaColumn, VelaError, compile_for_target, find_vela_binary, read_tflite_graph
 from ..vela.invoke import VelaInvocation, invoke_vela, vela_command
+from ..vela.summary import VelaSummaryError
 from .inspection import inspect_prepared_model, sha256
 from .types import (
     Accelerator,
@@ -78,6 +79,13 @@ def _target(request: PrepareRequest) -> tuple[Accelerator, TargetEvidence]:
         raise InvalidPreparation("settings.policy_id must identify the explicit compiler assumptions")
     if type(settings.arena_cache_size) is not int or settings.arena_cache_size < 0:
         raise InvalidPreparation("settings.arena_cache_size must be a non-negative byte count")
+    if settings.timing_overrides is not None:
+        unknown = set(settings.timing_overrides.memories) - set(settings.soc.memories)
+        if unknown:
+            raise InvalidPreparation(
+                f"settings.timing_overrides.memories: unknown keys {sorted(unknown)}; "
+                f"use canonical names {sorted(settings.soc.memories)}"
+            )
     clock = settings.soc.resolve_mode(settings.mode).npu_clock_hz
     if not math.isfinite(clock) or clock <= 0:
         raise InvalidPreparation("settings.mode must supply a positive finite NPU clock")
@@ -177,7 +185,18 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
                         str(invocation.config_file): invocation.config_file.relative_to(root).as_posix(),
                     }
                     arguments = tuple(replacements.get(arg, arg) for arg in argv)
-                    return invoke_vela(vela, invocation, input_path, output_path)
+                    log = output_path / "compiler.log"
+                    try:
+                        output = invoke_vela(vela, invocation, input_path, output_path)
+                    except VelaError as exc:
+                        cause = exc.__cause__
+                        if isinstance(cause, subprocess.CalledProcessError):
+                            log.write_text((cause.stdout or "") + "\n" + (cause.stderr or ""), encoding="utf-8")
+                        raise
+                    # Persist before summary parsing: even successful compilers can
+                    # emit malformed or incomplete artifacts worth investigating.
+                    log.write_text(output, encoding="utf-8")
+                    return output
 
                 compiled = compile_for_target(
                     model,
@@ -192,7 +211,6 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
                     vela_bin=str(binary),
                     runner=run,
                 )
-                (destination / "stdout.txt").write_text(compiled.stdout, encoding="utf-8")
                 return compiled
 
             baseline = None
@@ -323,6 +341,6 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
         (root / "failure.txt").write_text(str(exc), encoding="utf-8")
         if isinstance(exc, (InvalidPreparation, InvalidPreparedArtifact, ImportError)):
             raise
-        if isinstance(exc, (VelaError, OSError, subprocess.SubprocessError)):
+        if isinstance(exc, (VelaError, VelaSummaryError, OSError, subprocess.SubprocessError)):
             raise CompilationFailed(f"{root}: preparation failed; see failure.txt ({exc})") from exc
         raise
