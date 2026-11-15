@@ -53,7 +53,10 @@ requires a compiler model with that same family and MAC count. The resulting
 record identifies the target as custom, without claiming catalog hardware facts.
 
 `NpuCompileSettings` also accepts existing typed `TimingOverrides` and an explicit
-`vela_bin`. The policy ID, full effective compiler model, generated configuration,
+`vela_bin`. Optional `memory_mode` preserves a caller's standard Vela mode label;
+it must agree with the selected placement. Without it, the physical placement
+label is used. Inspection records schema-known I/O element types without claiming
+that a particular runtime can execute them. The policy ID, full effective compiler model, generated configuration,
 normalized arguments, compiler version output and executable hash are retained.
 Compiler-reported accelerator/system-config/memory-mode fields are retained
 separately from the requested settings and decoded per-region identities.

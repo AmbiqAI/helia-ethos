@@ -480,3 +480,48 @@ def test_version_one_record_remains_npu_required(request_model: PrepareRequest, 
     prepared.record_path.write_text(json.dumps(data))
     with pytest.raises(InvalidPreparedArtifact, match="version 1 requires"):
         inspect_prepared_model(prepared.record_path)
+
+
+def test_cpu_only_unsigned_output_is_observed_not_rejected(request_model, tmp_path):
+    from ai_edge_litert import schema_py_generated as schema
+    from ai_edge_litert.tools import flatbuffer_utils
+
+    from conftest import write_add_chain_model
+
+    source = write_add_chain_model(tmp_path / "unsigned.tflite", num_ops=1)
+    model: Any = flatbuffer_utils.read_model_from_bytearray(source.read_bytes())
+    code = model.operatorCodes[0]
+    code.builtinCode = code.deprecatedBuiltinCode = schema.BuiltinOperator.CAST
+    graph = model.subgraphs[0]
+    graph.inputs = [0]
+    operator = graph.operators[0]
+    operator.inputs = [0]
+    operator.builtinOptionsType = schema.BuiltinOptions.CastOptions
+    operator.builtinOptions = schema.CastOptionsT()
+    operator.builtinOptions.inDataType = schema.TensorType.INT32
+    operator.builtinOptions.outDataType = schema.TensorType.UINT32
+    for tensor in graph.tensors:
+        tensor.type = schema.TensorType.INT32
+        tensor.quantization = None
+    graph.tensors[graph.outputs[0]].type = schema.TensorType.UINT32
+    flatbuffer_utils.write_model(model, str(source))
+    prepared = prepare_model(replace(request_model, source=source, npu_requirement=NpuRequirement.OPTIONAL))
+    observed = inspect_prepared_model(prepared.record_path)
+    assert not observed.regions
+    assert observed.inputs[0].dtype == "int32"
+    assert observed.outputs[0].dtype == "uint32"
+
+
+def test_explicit_memory_mode_preserves_compiler_label(request_model):
+    settings = replace(request_model.settings, memory_mode="Dedicated_Sram")
+    prepared = prepare_model(replace(request_model, settings=settings))
+    assert prepared.compilation.summary.raw["memory_mode"] == "Dedicated_Sram"
+    assert prepared.info.record is not None
+    assert prepared.info.record.compiler.reported_memory_mode == "Dedicated_Sram"
+
+
+def test_memory_mode_must_agree_with_placement(request_model):
+    settings = replace(request_model.settings, memory_mode="Sram_Only")
+    with pytest.raises(InvalidPreparation, match=r"memory_mode.*placement"):
+        prepare_model(replace(request_model, settings=settings))
+    assert not request_model.output_dir.exists()

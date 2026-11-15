@@ -14,7 +14,7 @@ import helia_ethos
 from ..catalog import CatalogNpuFacts
 from ..catalog_identity import CatalogContentIdentity
 from ..model import ModelTensor
-from ..soc import MemoryPlacement, NpuFamily, SocDefinition, TimingOverrides
+from ..soc import MemoryPlacement, NpuFamily, SocDefinition, TimingOverrides, VelaMemoryMode
 
 
 class PreparationError(ValueError):
@@ -72,6 +72,7 @@ class NpuCompileSettings:
     arena_cache_size: int = 0
     timing_overrides: TimingOverrides | None = None
     vela_bin: str | None = None
+    memory_mode: VelaMemoryMode | str | None = None
 
 
 @dataclass(frozen=True)

@@ -95,6 +95,11 @@ def _target(request: PrepareRequest) -> tuple[Accelerator, TargetEvidence]:
         raise InvalidPreparation("settings.soc requires positive finite memory bandwidth")
     # Resolve all requested memory names; selection never depends on catalog order.
     settings.soc.validate_placement(settings.placement)
+    if settings.memory_mode is not None and settings.memory_mode not in {
+        settings.soc.placement_label(settings.placement),
+        settings.soc.vela_memory_mode_label(settings.placement),
+    }:
+        raise InvalidPreparation("settings.memory_mode must name the selected placement")
     return accelerator, evidence
 
 
@@ -206,7 +211,7 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
                     settings.soc,
                     settings.mode,
                     placement=settings.placement,
-                    memory_mode=settings.soc.placement_label(settings.placement),
+                    memory_mode=settings.memory_mode or settings.soc.placement_label(settings.placement),
                     extra_placements=(settings.placement,),
                     arena_cache_size=settings.arena_cache_size,
                     timing_overrides=settings.timing_overrides,
