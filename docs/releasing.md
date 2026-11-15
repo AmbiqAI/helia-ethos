@@ -2,6 +2,9 @@
 
 The package retains its extracted baseline version. Release Please proposes the
 next version from conventional commits; maintainers review and merge that PR.
+The version is dynamic: Hatch reads the Release Please-marked declaration in
+`src/helia_ethos/__init__.py`. The editable project has no version in `uv.lock`,
+so no lockfile version updater is needed.
 Do not publish a local candidate as a release or edit version/changelog manually.
 
 Before enabling publication:

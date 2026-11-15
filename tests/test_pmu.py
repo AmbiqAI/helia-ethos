@@ -78,7 +78,7 @@ class TestPrograms:
 
 class TestIdentityAndAcquisition:
     def test_program_id_is_stable_and_versioned(self) -> None:
-        assert program_for(NpuFamily.ETHOS_U85, "dv_align").id == "helia-ethos/ethos-u85/dv_align/v1"
+        assert program_for(NpuFamily.ETHOS_U85, "dv_align").id == "helia-npu/ethos-u85/dv_align/v1"
 
     def test_acquisition_is_recorded_per_consumer(self) -> None:
         """Width, place and unit of accumulation and the overflow scope belong to the consumer, not the events."""

@@ -183,7 +183,8 @@ class PmuProgram:
     #: How the consumer that runs this program reads and sums it. Not part of the program's
     #: identity (``id``, ``events``); part of whether two captures are comparable.
     acquisition: Acquisition | None = None
-    owner: str = "helia-ethos"
+    # Retained result identity: a package rename must not change the PMU program.
+    owner: str = "helia-npu"
 
     def __post_init__(self) -> None:
         expected = slot_count(self.npu_family)

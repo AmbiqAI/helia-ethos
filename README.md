@@ -236,5 +236,10 @@ Release Please owns version and changelog changes. Release publication requires
 the PyPI trusted publisher and protected `pypi` environment to be configured.
 See [release setup](docs/releasing.md).
 
+The inherited 0.1.0 changelog describes the pre-extraction `helia-npu` package;
+its old import names are historical. Use `helia_ethos` and the installation
+examples above. PMU program identifiers retain their `helia-npu/` prefix so
+existing and new captures identify the same counter program.
+
 The source is publicly available under the Ambiq Evaluation Source License;
 see [LICENSE](LICENSE) for permitted use and redistribution restrictions.
