@@ -1,0 +1,34 @@
+# The atomiq110 RTL synthesised onto the "turbo" FPGA board, NPU drop.
+#
+# A subset of the design: CM55 + Ethos-U85-256 + SSRAM + TCM, with RRAM emulated
+# and no HBLRAM. The clocks below are the recorded configuration of the retained
+# heliaPROFILER captures (25 MHz everywhere, so NPU:fabric is 1:1 instead of the silicon's
+# 2:1 at HP); other bitstreams run slower, around 10 MHz, and a capture's clock
+# comes from its own record, not from this file. Memory looks relatively faster
+# than it will on the part, and stall behaviour does not transfer. Cycle counts
+# are exact for compute-bound work. Record the drop as build_id. The SDK's HAL
+# header sizes HBLRAM at 13 MiB; its intended realization is unresolved. Do not
+# infer an FPGA or silicon capacity from it. This NPU drop populates none of it
+# (see emulation below). The catalog correction and planned capacity options are
+# tracked in AmbiqAI/helia-platforms#167.
+id: atomiq110-fpga-turbo-npu
+soc: atomiq110
+kind: fpga
+name: atomiq110 FPGA turbo (NPU drop)
+board: atomiq110_fpga_turbo
+implements: [cpu, npu, ssram, tcm, rram, pmu]
+clocks:
+  cpu_hz: 25e6
+  npu_hz: 25e6
+  fabric_hz: 25e6
+emulation:
+  - {feature: rram, stand_in: bram, notes: "4 MB at 0x22000000, FPGA block RAM; not RRAM timing"}
+  - {feature: hblram, stand_in: absent, notes: "not populated; the HBLRAM aperture is unmapped on this board"}
+  - {feature: gpu, stand_in: absent}
+  - {feature: display, stand_in: absent}
+build_id: null            # set per capture: bitstream / RTL drop id
+fidelity_notes:
+  - "NPU and fabric both at 25 MHz (1:1). Silicon runs 500:250 at HP; HP stalls cannot be observed here."
+  - "Zero-wait SSRAM at this clock, so NPU_ACTIVE looks placement-independent; it is not on the part."
+  - "Ethos-U driver, REGIONCFG and cache hooks are Arm defaults; NPU perf mode has no effect (always on)."
+timing_is_representative: false

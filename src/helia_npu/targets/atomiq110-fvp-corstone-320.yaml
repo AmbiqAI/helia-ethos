@@ -1,0 +1,31 @@
+# The Corstone-320 Fast Model standing in for atomiq110: what helx simulates on.
+#
+# It is not the AT110 design. The CPU is a Cortex-M85, the memory system is the
+# Corstone reference with two timing adapters (one per Vela port) programmed
+# from the SoC's latency/bandwidth values, and there is no fabric, no
+# arbitration, no port-1 device behaviour (HBLRAM, PSRAM or RRAM). NPU cycle counts track RTL to within
+# ~1% at ULP and run ~25% short at HP (platform v8 closes the HP gap; see the helia-estimator platform guide).
+id: atomiq110-fvp-corstone-320
+soc: atomiq110
+kind: simulator
+name: Corstone-320 FVP as atomiq110
+board: null
+implements: [cpu, npu, ssram, tcm, hblram, psram, rram, pmu]
+clocks:
+  cpu_hz: null          # the model's CPU timing is instruction-approximate; not used for measurements
+  npu_hz: null          # set per run from the SoC mode (ULP 100e6 / HP 500e6)
+  fabric_hz: 250e6      # the ratio the timing adapters are derived from
+emulation:
+  - {feature: hblram, stand_in: fvp-ddr, notes: "FVP DDR region with the SoC's HBLRAM latency/bandwidth applied via timing adapter 1 (the default port-1 memory)"}
+  - {feature: psram, stand_in: fvp-ddr, notes: "the same DDR region and timing adapter 1, programmed with PSRAM's values when the placement puts data in psram"}
+  - {feature: rram, stand_in: fvp-ddr, notes: "the same DDR region and timing adapter 1, programmed with RRAM's values when the placement puts data in rram; writes are not blocked as on the part"}
+  - {feature: ssram, stand_in: fvp-sram, notes: "timing adapter 0 with the SoC's port-rate stand-in (2 reads in flight at 120 ns); the adapter has no per-burst bandwidth cap"}
+  - {feature: cpu, stand_in: cortex-m85, notes: "Cortex-M85 fast model, no cache or bus timing"}
+build_id: "Fast Models 11.27.25"
+fvp_subsystem: corstone_320   # helx attributes a run here only when the SoC's NPU runs on this FVP
+fidelity_notes:
+  - "Two timing adapters only: no fabric bandwidth cap across the NPU's three masters, no other-master contention."
+  - "Timing-adapter bandwidth is an average over a 4,000-cycle window; bursty demand is treated optimistically."
+  - "No device behaviour for the port-1 memory: no DRAM page misses or refresh for HBLRAM, no XSPI protocol overhead for PSRAM, no RRAM read-only enforcement."
+  - "Cycle counter is quantised to 1,000-cycle steps around the measurement window; event counters are exact."
+timing_is_representative: false

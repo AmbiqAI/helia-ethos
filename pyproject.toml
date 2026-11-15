@@ -1,0 +1,104 @@
+[project]
+name = "helia-npu"
+dynamic = ["version"]
+description = "Ethos-U NPU support for the helia toolchain: SoC definitions with provenance, Vela compilation for a SoC and operating point, PMU programs, model inspection and graph fencing."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [{ name = "Ambiq AITG", email = "support.aitg@ambiq.com" }]
+keywords = ["ethos-u", "vela", "npu", "ambiq", "tinyml"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+
+# Stay within the catalog minor release validated by this adapter.
+dependencies = [
+    "helia-platforms>=0.2,<0.3",
+    "pydantic>=2.11,<3",
+    "pyyaml>=6.0.2",
+]
+
+[project.optional-dependencies]
+# Reading and rewriting .tflite files: helia_npu.model, helia_npu.fencing,
+# helia_npu.vela.read_tflite_graph.
+models = [
+    "ai-edge-litert>=2.1.6,<2.3",
+    # LiteRT declares this unconditionally; 1.3+ excludes our Python versions.
+    "backports-strenum<1.3",
+]
+# The Vela compiler itself, for compile_for_target and invoke_vela.
+vela = ["ethos-u-vela>=5.2.0"]
+all = ["helia-npu[models,vela]"]
+
+[project.urls]
+Repository = "https://github.com/AmbiqAI/helia-estimator"
+Documentation = "https://github.com/AmbiqAI/helia-estimator/tree/main/packages/helia-npu"
+Changelog = "https://github.com/AmbiqAI/helia-estimator/blob/main/packages/helia-npu/CHANGELOG.md"
+
+# The package must be testable on its own: it moves to its own repository once
+# its API settles. The suite needs both extras.
+[dependency-groups]
+dev = ["pytest>=7.0.0", "ruff>=0.14", "ty>=0.0.1a21", "helia-npu[all]"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/helia_npu/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/helia_npu"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"NOTICE" = "helia_npu/NOTICE"
+
+[tool.hatch.build]
+include = ["/src/helia_npu/**/*.py", "/src/helia_npu/**/*.yaml", "/src/helia_npu/py.typed"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src", "/tests", "/docs", "/CHANGELOG.md", "/LICENSE", "/NOTICE", "/README.md", "/pyproject.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["helia_npu"]
+
+[tool.ty.environment]
+python-version = "3.11"
+
+[tool.ty.src]
+include = ["src", "tests"]
+
+[[tool.ty.overrides]]
+include = ["src/helia_npu/fencing.py", "tests/test_fencing.py", "tests/conftest.py"]
+
+# ai_edge_litert's generated flatbuffer classes ship no annotations; the fencing
+# module guards at its entry points instead.
+[tool.ty.overrides.rules]
+unresolved-attribute = "ignore"
+not-subscriptable = "ignore"
+invalid-argument-type = "ignore"
+invalid-return-type = "ignore"
+invalid-assignment = "ignore"
+not-iterable = "ignore"

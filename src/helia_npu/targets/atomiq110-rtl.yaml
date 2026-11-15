@@ -1,0 +1,24 @@
+# The atomiq110 RTL testbench: verification runs and power-analysis runs.
+#
+# The design itself, simulated. Cycle-accurate for everything in the netlist,
+# but the testbench's memory models and run options decide
+# how the SSRAM/HBLRAM paths behave, and DFT/MBIST are not clock-gated in RTL
+# simulation, so power numbers are used DFT-gated.
+id: atomiq110-rtl
+soc: atomiq110
+kind: rtl
+name: atomiq110 RTL testbench
+board: null
+implements: [cpu, npu, ssram, tcm, hblram, rram, pmu]
+clocks:
+  cpu_hz: null
+  npu_hz: null          # 100e6 / 500e6 per run
+  fabric_hz: 250e6
+emulation:
+  - {feature: hblram, stand_in: testbench-model, notes: "memory model, not the DRAM die"}
+  - {feature: rram, stand_in: testbench-model}
+build_id: null          # RTL drop / netlist tag per run
+fidelity_notes:
+  - "The testbench prints start/end/duration only; PMU counters are not read (golden PMU files are FVP-generated)."
+  - "Testbench memory-wait settings are a per-run fact; they change HP cycle counts by ~25%."
+timing_is_representative: true

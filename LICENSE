@@ -1,0 +1,52 @@
+Ambiq Micro, Inc. Evaluation Source License
+
+Copyright (c) 2026 Ambiq Micro, Inc. All rights reserved.
+
+This software and its documentation (the "Software") are made available by
+Ambiq Micro, Inc. ("Ambiq") for evaluation purposes only, under the terms
+below. If you do not agree to these terms, do not use the Software.
+
+1. Grant. Subject to these terms, Ambiq grants you a non-exclusive,
+   non-transferable, revocable, royalty-free licence to use, reproduce and
+   modify the Software internally, solely to evaluate Ambiq products and to
+   develop and test software intended to run on Ambiq products.
+
+2. Restrictions. You may not (a) distribute, publish, sublicense, sell, rent
+   or otherwise make the Software or any modification of it available to any
+   third party, in source or object form; (b) use the Software to develop or
+   evaluate products that do not incorporate an Ambiq device; (c) remove or
+   alter any copyright, licence or attribution notice; or (d) use Ambiq's
+   name or trademarks except to identify the Software.
+
+3. Confidentiality. The Software may contain non-public information about
+   Ambiq products. Treat it as Ambiq confidential information under any
+   non-disclosure agreement in force between you and Ambiq; absent such an
+   agreement, do not disclose it outside your organisation.
+
+4. Third-party components. Portions of the Software depend on or include
+   third-party software distributed under their own licences (including
+   Arm's Ethos-U Vela compiler, Arm Fixed Virtual Platforms and models from
+   Google's LiteRT). Those licences govern those components. Arm's Fixed
+   Virtual Platform end-user licence applies to any FVP the Software
+   downloads on your behalf.
+
+5. Estimates. Numbers the Software produces are estimates from models and
+   simulators, not measurements of a device, and are provided for guidance
+   only. Ambiq makes no commitment that any product will meet them.
+
+6. No warranty. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+   KIND, EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
+
+7. Limitation of liability. IN NO EVENT SHALL AMBIQ BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR OTHERWISE,
+   ARISING FROM OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+8. Term. This licence continues until terminated. Ambiq may terminate it on
+   notice; it terminates automatically if you breach it. On termination,
+   stop using the Software and destroy your copies.
+
+9. Feedback. Suggestions or improvements you give Ambiq about the Software
+   may be used by Ambiq without obligation to you.
+
+Questions: support.aitg@ambiq.com

@@ -1,0 +1,133 @@
+# Consumer-owned timing and compiler policy. No NPU geometry, mode clocks or hash.
+# revision identifies the calibrated model, not a silicon stepping.
+# PSRAM is a comparison assumption, not a populated catalog device.
+name: AT110
+reference_target: atomiq110
+revision: v10
+defaults:
+  0: ssram
+  1: hblram
+memories:
+  ssram:
+    axi_port: 0
+    axi_clock_hz: 250e6
+    read_latency_ns: 64
+    write_latency_ns: 64
+    max_outstanding: 8
+    max_outstanding_writes: 4
+    burst_length: 128
+    ports_used: 1
+    provenance:
+      status: confirmed
+      source: Atomiq110 SoC specification (64 ns table latency, 8 outstanding), reviewed by Ambiq hardware review
+        2026-04-24; correlated 2026-10-05 against Atomiq110 FPGA PMU captures of ten models (kws_micronet_m, resnet_v1_8_32
+        and eight synthetic memory-bound to compute-bound models) at NPU 10 and 50 MHz with the exact command streams
+        (u85-npu-utilization results/issue60_captures)
+      reviewed_by: Ambiq hardware review (specification values, 2026-04-24); Ambiq FPGA bring-up, M. Abuhussein
+        (FPGA correlation)
+      reviewed_on: 2026-10-05
+      notes: 'with the port hash set, the specification values reproduce the FPGA directly; the v8/v9 120 ns / 2-outstanding
+        stand-in is retired. With the port hash and 64 ns, the bandwidth cap and the rate window do not bind on
+        any of the ten models; the outstanding limits do, on write traffic. The write side behaves as 4 in flight
+        (max_outstanding_writes): with the specification''s 8 for writes too, write-heavy single-operator streams
+        ran 16 to 21 percent fast at HP and the add model 7 percent fast; with 4, both writers are within 2 and
+        5 percent and every HP result of the ten models moves toward the FPGA or stays. A read limit below 8 over-penalises
+        mixed traffic (the add model at 1.13 with 5), so reads keep the specification''s 8 and a read-only stream
+        stays 19 percent fast. Correlation at 128 B bursts, FVP over FPGA NPU_ACTIVE, HP: kws 0.999, resnet 0.999,
+        worst 0.965 (add) and 1.051 (1x1 ladder, 16 channels, the same at ULP, so not a memory effect); ULP: worst
+        1.052, the rest within 0.5 percent, unchanged by the write limit. 256 B bursts cannot be simulated with
+        the hash (the FVP hangs), so the correlation covers 128 and 64 B. ports_used 1 keeps Vela 5.2 from caching
+        weights through the port (with two ports declared it caches regardless of latency) and is what the FPGA
+        streams were compiled with. Write latency assumed equal to read latency.'
+      fields:
+        axi_port:
+          status: confirmed
+          source: Atomiq110 SoC specification
+          reviewed_by: Ambiq hardware review
+          reviewed_on: 2026-04-24
+        axi_clock_hz:
+          status: confirmed
+          source: Atomiq110 SoC specification; fabric clock 250 MHz
+          reviewed_by: Ambiq hardware review
+          reviewed_on: 2026-04-24
+        burst_length:
+          status: fitted
+          source: 'the NPU driver''s AXI_SRAM.max_beats setting for AT110 (nsx-ethos-u-driver #11): 128 B balances
+            the two SRAM ports on the FPGA (kws hp -2.0 percent, memory-bound models -5 to -46 percent); the memory
+            path takes 256 B'
+        write_latency_ns:
+          status: unverified
+          source: assumed equal to the specification read latency
+        max_outstanding_writes:
+          status: fitted
+          source: 'FPGA PMU captures of write-heavy streams (1x1 conv 1 to 64 channels, 32x resize) and the ten
+            correlation models at NPU 50 MHz: the timing adapter''s write limit at 4 reproduces them, 8 runs 16
+            to 21 percent fast'
+        ports_used:
+          status: fitted
+          source: two NPU SRAM ports are wired; 1 is what the FPGA correlation streams were compiled with and keeps
+            Vela 5.2 from caching weights through the port
+  hblram:
+    axi_port: 1
+    axi_clock_hz: 250e6
+    read_latency_ns: 88
+    write_latency_ns: 88
+    max_outstanding: 12
+    burst_length: 256
+    ports_used: 1
+    provenance:
+      status: confirmed
+      source: Atomiq110 SoC specification; AT110 memory latency table (April 2026); SoC port assignment; DRAM device
+        datasheets; HBLRAM controller documentation
+      reviewed_by: Ambiq hardware review
+      reviewed_on: 2026-04-24
+      notes: max_outstanding 12 and the 256 B burst come from the controller documentation; the AXI clock is the
+        fabric's 250 MHz. The read latency is an architect estimate, not a measurement (6 device cycles at 500 MHz
+        plus controller and fabric time, rounded to 22 wait states), so it is marked unverified below. The device
+        is 64-bit SDR at 500 MHz max, so device peak is 4.0 GB/s per channel; the two controller ports each carry
+        4 GB/s at 250 MHz x 16 B. Whether HBL0 and HBL1 are independent device channels is not confirmed. Write
+        latency assumed equal to read latency.
+      fields:
+        read_latency_ns:
+          status: unverified
+          source: architect estimate (April 2026); not measured
+        write_latency_ns:
+          status: unverified
+          source: assumed equal to the read-latency estimate
+  rram:
+    axi_port: 1
+    axi_clock_hz: 250e6
+    read_latency_ns: 240
+    write_latency_ns: 240
+    max_outstanding: 2
+    burst_length: 256
+    ports_used: 1
+    provenance:
+      status: fitted
+      source: RTL corrected-window run of MobileNetV2-1.0-224 INT8 with weights in RRAM, HP 4,695,626 / ULP 2,489,048
+        cycles; RRAM macro spec (4 MB, 125 MHz controller, 32 B access, pipeline one word per 8 ns, 2-cycle latency)
+      notes: 'Stand-in for the path''s rate, like SSRAM in the golden SoC: 2 reads in flight at 240 ns reproduces
+        the RTL HP count within 1.5 percent and the ULP count within 5 percent; with 12 in flight, latency alone
+        moves the FVP by under 2 percent. Equivalent to one 256 B transaction per ~110 ns (2.3 GB/s), about half
+        the SSRAM port''s rate: between the macro''s 4 GB/s pipeline peak and the 0.8 GB/s the RTL run implies.
+        AXI writes to RRAM return an error on the part; the write latency is nominal. The generated Vela sections
+        carry this latency unchanged (RRAM is no deeper than SSRAM, so the port-1 clamp does not apply); with 240
+        ns above SSRAM''s 120 ns, Vela 5.2 caches weights in SSRAM at HP. Whether streaming from RRAM would be the
+        better trade is untested on hardware. NAP exit 200 ns and D3 exit 10-15 us are not modelled.'
+      fields:
+        write_latency_ns:
+          status: unverified
+          source: nominal; AXI writes to RRAM return an error on the part
+comparison_memories:
+  psram:
+    axi_port: 1
+    axi_clock_hz: 62.5e6
+    read_latency_ns: 152
+    write_latency_ns: 152
+    max_outstanding: 10
+    burst_length: 256
+    ports_used: 1
+    provenance:
+      status: unverified
+      source: AT110 memory latency table (PSRAM0, 250 MHz hex SPI DDR)
+      notes: XSPI bridge queue depth (max_outstanding 10) is unverified; 1 GB/s peak is generous vs ~850 MB/s effective.

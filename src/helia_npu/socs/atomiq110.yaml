@@ -1,0 +1,5 @@
+# Hardware facts come from helia-platforms; modeling assumptions from helia-npu.
+# Preserve the existing optional PSRAM experiment without claiming physical reach.
+catalog: atomiq110
+policy: atomiq110
+comparison_memories: [psram]

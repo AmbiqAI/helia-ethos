@@ -1,0 +1,18 @@
+# atomiq110 silicon. Placeholder until first silicon: fill in the stepping as
+# build_id and the board when boards exist.
+id: atomiq110-silicon
+soc: atomiq110
+kind: silicon
+name: atomiq110 silicon
+board: null
+implements: [cpu, npu, gpu, display, ssram, tcm, hblram, rram, xspi, pmu]
+clocks:
+  cpu_hz: null          # 100e6 / 250e6 / 500e6 by CPU mode
+  npu_hz: null          # 100e6 / 500e6 by NPU mode (the SoC's modes)
+  fabric_hz: 250e6
+emulation: []
+build_id: null          # stepping, e.g. A0
+since: null
+fidelity_notes:
+  - "Not yet available; every number attributed to this target so far is a prediction from the FVP or the RTL."
+timing_is_representative: true
