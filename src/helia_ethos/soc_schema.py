@@ -101,7 +101,7 @@ class ProvenanceModel(SocBoundaryModel):
 
 
 class ModeModel(SocBoundaryModel):
-    npu_clock_hz: float
+    npu_clock_hz: float = Field(gt=0, allow_inf_nan=False)
     """NPU clock in this mode, Hz."""
 
     @field_validator("npu_clock_hz", mode="before")
@@ -127,7 +127,7 @@ class MemoryModel(SocBoundaryModel):
     """Burst length, bytes. Ethos-U85 FVP runs need 64, 128 or 256: the runner's driver splits AXI bursts at it."""
     ports_used: int = 1
     """How many ports of this class Vela is told exist, 1 or 2."""
-    axi_clock_hz: float | None = None
+    axi_clock_hz: float | None = Field(default=None, gt=0, allow_inf_nan=False)
     """AXI clock of the memory path, Hz; the bandwidth per NPU cycle is derived from it and the NPU clock."""
     bandwidth_fraction: float | None = None
     """Alternative to axi_clock_hz: fraction of one data beat per NPU cycle the port sustains."""

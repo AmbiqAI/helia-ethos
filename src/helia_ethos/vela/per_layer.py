@@ -239,7 +239,8 @@ def read_tflite_graph(model_path: Path) -> list[TFLiteOp]:
             name = f"op_{i}"
 
         opcode_obj = model.OperatorCodes(op.OpcodeIndex())
-        builtin_code = opcode_obj.DeprecatedBuiltinCode()
+        # Extended codes use a placeholder in the legacy int8 field.
+        builtin_code = max(opcode_obj.BuiltinCode(), opcode_obj.DeprecatedBuiltinCode())
         custom_code = opcode_obj.CustomCode()
         opcode_name = custom_code.decode() if custom_code else opcode_names.get(builtin_code, f"BUILTIN_{builtin_code}")
 

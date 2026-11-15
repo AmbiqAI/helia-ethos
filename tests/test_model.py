@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import struct
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -74,3 +75,38 @@ def test_model_io_preserves_concrete_shapes_and_storage(conv_model: Path):
     assert [(t.index, t.dtype, t.shape) for t in inputs] == [(0, "int8", (1, 4, 4, 2))]
     assert [(t.index, t.dtype, t.shape) for t in outputs] == [(0, "int8", (1, 4, 4, 4))]
     assert inputs[0].name and outputs[0].name
+
+
+@pytest.mark.parametrize("bias_form", ["present", "omitted", "sentinel"])
+def test_transpose_conv_bias_uses_fourth_input(conv_model_without_command_stream: Path, bias_form: str) -> None:
+    import copy
+
+    from ai_edge_litert import schema_py_generated as schema
+    from ai_edge_litert.tools import flatbuffer_utils
+
+    path = conv_model_without_command_stream
+    model: Any = flatbuffer_utils.read_model_from_bytearray(path.read_bytes())
+    graph = model.subgraphs[0]
+    shape = copy.deepcopy(graph.tensors[2])
+    shape.name, shape.shape, shape.buffer = b"output_shape", [4], len(model.buffers)
+    buffer = schema.BufferT()
+    buffer.data = list(struct.pack("<4i", 1, 4, 4, 4))
+    model.buffers.append(buffer)
+    graph.tensors.append(shape)
+    model.operatorCodes[0].builtinCode = schema.BuiltinOperator.TRANSPOSE_CONV
+    model.operatorCodes[0].deprecatedBuiltinCode = schema.BuiltinOperator.TRANSPOSE_CONV
+    op = graph.operators[0]
+    op.inputs = [len(graph.tensors) - 1, 1, 0]
+    if bias_form == "present":
+        op.inputs.append(2)
+    elif bias_form == "sentinel":
+        op.inputs.append(-1)
+    op.builtinOptionsType = schema.BuiltinOptions.TransposeConvOptions
+    op.builtinOptions = schema.TransposeConvOptionsT()
+    flatbuffer_utils.write_model(model, str(path))
+    result = characterize_model(path)
+    assert result.weight_bytes == CONV_WEIGHT_BYTES
+    assert result.bias_bytes == (CONV_BIAS_BYTES if bias_form == "present" else 0)
+    assert result.bias_params == (CONV_BIAS_BYTES // 4 if bias_form == "present" else 0)
+    # The unreferenced bias buffer is still a constant when bias is absent.
+    assert result.total_const_bytes == CONV_WEIGHT_BYTES + CONV_BIAS_BYTES + len(buffer.data)

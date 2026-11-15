@@ -382,3 +382,19 @@ memories:
         reads_only = TimingOverrides(memories={"ssram": MemoryTimingOverride(max_outstanding=16)})
         hp2 = derive_timing(soc, "HP", reads_only)
         assert (hp2.memories["ssram"].max_outstanding, hp2.memories["ssram"].write_outstanding) == (16, 4)
+
+
+@pytest.mark.parametrize("value", [0, -1, float("nan"), float("inf"), float("-inf")])
+@pytest.mark.parametrize("clock", ["npu_clock_hz", "axi_clock_hz"])
+def test_invalid_clock_is_a_located_soc_error(at110_soc_file: Path, value: float, clock: str) -> None:
+    import yaml
+
+    document = yaml.safe_load(at110_soc_file.read_text())
+    if clock == "npu_clock_hz":
+        document["modes"]["ULP"][clock] = value
+    else:
+        document["memories"]["ssram"][clock] = value
+    at110_soc_file.write_text(yaml.safe_dump(document))
+    with pytest.raises(SocError, match=clock) as error:
+        load_soc(at110_soc_file)
+    assert str(at110_soc_file) in str(error.value)

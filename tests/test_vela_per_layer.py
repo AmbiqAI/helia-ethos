@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -92,9 +93,36 @@ def test_read_tflite_graph_rejects_unsupported_subgraph_scope(conv_model: Path, 
     from ai_edge_litert.tools import flatbuffer_utils
 
     # Own the bytes: these fixture edits may overwrite the file on Windows.
-    model = flatbuffer_utils.read_model_from_bytearray(conv_model.read_bytes())
+    model: Any = flatbuffer_utils.read_model_from_bytearray(conv_model.read_bytes())
     assert model.subgraphs is not None
     model.subgraphs = model.subgraphs * count
     flatbuffer_utils.write_model(model, str(conv_model))
     with pytest.raises(ValueError, match="single-subgraph"):
         read_tflite_graph(conv_model)
+
+
+@pytest.mark.parametrize("encoding", ["extended", "legacy", "custom"])
+def test_graph_operator_codes_across_encodings(add_chain_model: Path, encoding: str) -> None:
+    from ai_edge_litert import schema_py_generated as schema
+    from ai_edge_litert.tools import flatbuffer_utils
+
+    from helia_ethos.model import characterize_model
+
+    model: Any = flatbuffer_utils.read_model_from_bytearray(add_chain_model.read_bytes())
+    code = model.operatorCodes[0]
+    if encoding == "extended":
+        code.builtinCode = schema.BuiltinOperator.GELU
+        code.deprecatedBuiltinCode = schema.BuiltinOperator.PLACEHOLDER_FOR_GREATER_OP_CODES
+        expected = "GELU"
+    elif encoding == "legacy":
+        code.builtinCode = 0
+        code.deprecatedBuiltinCode = schema.BuiltinOperator.MUL
+        expected = "MUL"
+    else:
+        code.builtinCode = code.deprecatedBuiltinCode = schema.BuiltinOperator.CUSTOM
+        code.customCode = b"ETHOS_U_STREAM_SPLIT"
+        expected = "ETHOS_U_STREAM_SPLIT"
+    flatbuffer_utils.write_model(model, str(add_chain_model))
+    assert all(op.opcode == expected for op in read_tflite_graph(add_chain_model))
+    if encoding != "custom":
+        assert characterize_model(add_chain_model).operator_counts == {expected: 2}
