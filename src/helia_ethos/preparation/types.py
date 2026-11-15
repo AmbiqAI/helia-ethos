@@ -5,17 +5,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer, model_validator
+
+import helia_ethos
 
 from ..catalog import CatalogNpuFacts
 from ..catalog_identity import CatalogContentIdentity
 from ..model import ModelTensor
 from ..soc import MemoryPlacement, NpuFamily, SocDefinition, TimingOverrides
-
-if TYPE_CHECKING:
-    from ..vela import CompiledModel
 
 
 class PreparationError(ValueError):
@@ -228,6 +227,13 @@ class PreparationRecord(RecordValue):
     inputs: tuple[ModelTensor, ...]
     outputs: tuple[ModelTensor, ...]
 
+    @model_serializer(mode="wrap")
+    def _serialize_version(self, handler: SerializerFunctionWrapHandler) -> dict[str, object]:
+        payload = handler(self)
+        if self.schema_version == 1:
+            payload.pop("npu_requirement", None)
+        return payload
+
     @model_validator(mode="after")
     def _version_policy(self) -> PreparationRecord:
         if self.schema_version == 1 and self.npu_requirement is not NpuRequirement.REQUIRED:
@@ -264,5 +270,5 @@ class PreparedModel:
     tflite: Path
     record_path: Path
     info: PreparedModelInfo
-    compilation: CompiledModel
+    compilation: helia_ethos.CompiledModel
     compiler_log: Path

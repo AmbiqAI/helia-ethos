@@ -469,7 +469,10 @@ def test_version_one_record_remains_npu_required(request_model: PrepareRequest) 
     data["schema_version"] = 1
     del data["npu_requirement"]
     prepared.record_path.write_text(json.dumps(data))
-    assert inspect_prepared_model(prepared.record_path).regions
+    inspected = inspect_prepared_model(prepared.record_path)
+    assert inspected.regions and inspected.record is not None
+    assert "npu_requirement" not in inspected.record.model_dump()
+    assert json.loads(inspected.record.model_dump_json()) == data
     data["npu_requirement"] = "optional"
     prepared.record_path.write_text(json.dumps(data))
     with pytest.raises(InvalidPreparedArtifact, match="version 1 requires"):
