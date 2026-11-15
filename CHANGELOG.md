@@ -3,6 +3,19 @@
 All notable changes to helia-npu. The package follows semantic versioning once
 it reaches 1.0; until then a minor bump may change an API.
 
+## [0.2.0](https://github.com/AmbiqAI/helia-ethos/compare/v0.1.0...v0.2.0) (2026-11-15)
+
+
+### Features
+
+* add shared model preparation and retained artifact inspection ([#5](https://github.com/AmbiqAI/helia-ethos/issues/5)) ([fc27143](https://github.com/AmbiqAI/helia-ethos/commit/fc27143d2e0cbdb24d41b8a606be2fe9d06f9a63))
+* extract standalone helia-ethos package ([#1](https://github.com/AmbiqAI/helia-ethos/issues/1)) ([39b17d3](https://github.com/AmbiqAI/helia-ethos/commit/39b17d3302d3815e3be27d9ae15649f465ec631d))
+
+
+### Bug Fixes
+
+* correct model inspection and reject invalid timing clocks ([#3](https://github.com/AmbiqAI/helia-ethos/issues/3)) ([bdae235](https://github.com/AmbiqAI/helia-ethos/commit/bdae23593b072400761d8c342c4d9179f83b4ee5))
+
 ## 0.1.0 (unreleased, developed inside helia-estimator)
 
 - `MemoryTimingOverride.deliberate` (default true): an override a tool derives sets it false, so it reaches
