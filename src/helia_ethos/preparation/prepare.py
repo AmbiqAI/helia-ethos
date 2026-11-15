@@ -36,6 +36,7 @@ from .types import (
     FenceEvidence,
     InvalidPreparation,
     InvalidPreparedArtifact,
+    NpuRequirement,
     PackageVersion,
     PreparationRecord,
     PreparedModel,
@@ -94,6 +95,11 @@ def _target(request: PrepareRequest) -> tuple[Accelerator, TargetEvidence]:
         raise InvalidPreparation("settings.soc requires positive finite memory bandwidth")
     # Resolve all requested memory names; selection never depends on catalog order.
     settings.soc.validate_placement(settings.placement)
+    if settings.memory_mode is not None and settings.memory_mode not in {
+        settings.soc.placement_label(settings.placement),
+        settings.soc.vela_memory_mode_label(settings.placement),
+    }:
+        raise InvalidPreparation("settings.memory_mode must name the selected placement")
     return accelerator, evidence
 
 
@@ -114,6 +120,8 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
     """
     source, root = Path(request.source).resolve(), Path(request.output_dir).resolve()
     try:
+        if not isinstance(request.npu_requirement, NpuRequirement):
+            raise InvalidPreparation("npu_requirement must be a NpuRequirement")
         expected, target = _target(request)
         source_info = inspect_prepared_model(source)
         if source_info.regions:
@@ -203,7 +211,7 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
                     settings.soc,
                     settings.mode,
                     placement=settings.placement,
-                    memory_mode=settings.soc.placement_label(settings.placement),
+                    memory_mode=settings.memory_mode or settings.soc.placement_label(settings.placement),
                     extra_placements=(settings.placement,),
                     arena_cache_size=settings.arena_cache_size,
                     timing_overrides=settings.timing_overrides,
@@ -252,7 +260,7 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
                 baseline if baseline is not None and not boundaries else compile_one(compiler_input, root / "compiled")
             )
             info = inspect_prepared_model(compiled.tflite)
-            if not info.regions:
+            if not info.regions and request.npu_requirement is NpuRequirement.REQUIRED:
                 raise InvalidPreparedArtifact("Vela output contains no compiled Ethos-U regions")
             if info.compatibility(expected) == AcceleratorCompatibility.INCOMPATIBLE:
                 raise InvalidPreparedArtifact("Compiled accelerator differs from the requested accelerator")
@@ -303,6 +311,8 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
                 allow_nan=False,
             )
             record = PreparationRecord(
+                schema_version=2,
+                npu_requirement=request.npu_requirement,
                 source_sha256=source_info.sha256,
                 target=target,
                 compiler=CompileEvidence(
@@ -335,7 +345,7 @@ def prepare_model(request: PrepareRequest) -> PreparedModel:
         # Scratch cleanup must succeed before a success record becomes visible.
         record_path = root / "preparation.json"
         pending.rename(record_path)
-        return PreparedModel(compiled.tflite, record_path, validated)
+        return PreparedModel(compiled.tflite, record_path, validated, compiled, compiled.tflite.parent / "compiler.log")
     except Exception as exc:
         (root / "pending.json").unlink(missing_ok=True)
         (root / "failure.txt").write_text(str(exc), encoding="utf-8")

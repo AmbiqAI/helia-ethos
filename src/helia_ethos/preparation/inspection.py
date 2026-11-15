@@ -17,6 +17,7 @@ from .types import (
     ArtifactRole,
     CustomOperator,
     InvalidPreparedArtifact,
+    NpuRequirement,
     PreparationRecord,
     PreparedModelInfo,
     Region,
@@ -140,7 +141,7 @@ def _inspect_record(path: Path) -> PreparedModelInfo:
         record.outputs,
     ):
         raise InvalidPreparedArtifact("Observed model requirements differ from the preparation record")
-    if not info.regions:
+    if not info.regions and record.npu_requirement is NpuRequirement.REQUIRED:
         raise InvalidPreparedArtifact("Recorded model contains no Ethos-U regions")
     if record.fences is not None and record.fences.boundaries:
         from ..fencing import load_fence_boundaries, npu_invocation_spans

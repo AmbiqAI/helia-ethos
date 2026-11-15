@@ -287,7 +287,7 @@ def _format_shapes(shapes: list[list[int]]) -> str:
 
 @dataclass(frozen=True)
 class ModelTensor:
-    """An entry-subgraph tensor's ordinal, name, scalar storage type and fixed dimensions."""
+    """An entry-subgraph tensor's ordinal, name, declared element type and fixed dimensions."""
 
     index: int
     name: str
@@ -302,6 +302,9 @@ def model_io(tflite_path: Path) -> tuple[tuple[ModelTensor, ...], tuple[ModelTen
     if model.SubgraphsLength() == 0:
         raise ValueError("model has no entry subgraph")
     graph = model.Subgraphs(0)
+    # Inspection describes the graph; runtime support and byte-size calculations
+    # are separate contracts. CPU-only I/O may use types outside _type_names().
+    declared_types = {value: name.lower() for name, value in vars(schema.TensorType).items() if type(value) is int}
     groups = []
     for label in ("Inputs", "Outputs"):
         tensors = []
@@ -310,7 +313,7 @@ def model_io(tflite_path: Path) -> tuple[tuple[ModelTensor, ...], tuple[ModelTen
             shape = tuple(int(tensor.Shape(i)) for i in range(tensor.ShapeLength()))
             if any(n <= 0 for n in shape):
                 raise ValueError(f"{label.lower()}[{index}] has dynamic or empty dimensions")
-            dtype = _type_names().get(tensor.Type())
+            dtype = declared_types.get(tensor.Type())
             if dtype is None:
                 raise ValueError(f"{label.lower()}[{index}] uses unsupported storage type {tensor.Type()}")
             name = tensor.Name()

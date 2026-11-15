@@ -28,3 +28,13 @@ def test_public_preparation_imports_do_not_load_compiler_or_optional_dependencie
     """)
     completed = subprocess.run([sys.executable, "-I", "-c", script], capture_output=True, text=True)
     assert completed.returncode == 0, completed.stderr
+
+
+def test_prepared_model_runtime_type_hints_resolve():
+    """Opt-in runtime introspection resolves the same compiler result type."""
+    from typing import get_type_hints
+
+    from helia_ethos import PreparedModel
+    from helia_ethos.vela import CompiledModel
+
+    assert get_type_hints(PreparedModel)["compilation"] is CompiledModel

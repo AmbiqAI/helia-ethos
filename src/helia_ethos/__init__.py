@@ -37,6 +37,7 @@ from .preparation import (
     InvalidPreparation,
     InvalidPreparedArtifact,
     NpuCompileSettings,
+    NpuRequirement,
     PreparationError,
     PreparationRecord,
     PreparedModel,
@@ -102,6 +103,7 @@ if TYPE_CHECKING:  # the names resolved by __getattr__, visible to type checkers
         rewrite_model_with_fences,
     )
     from .model import ModelCharacterization, characterize_model, command_stream_bytes  # noqa: F401
+    from .vela import CompiledModel as CompiledModel
 
 __version__ = "0.2.1"  # x-release-please-version
 
@@ -131,7 +133,11 @@ _MODEL = {"ModelCharacterization", "characterize_model", "command_stream_bytes"}
 
 
 def __getattr__(name: str) -> Any:
-    """Import a fencing or model name on first use, so the core does not need the ``models`` extra."""
+    """Resolve compiler, fencing and model names on demand, keeping core imports lightweight."""
+    if name == "CompiledModel":
+        from .vela import CompiledModel
+
+        return CompiledModel
     if name in _FENCING:
         from . import fencing
 
@@ -145,7 +151,7 @@ def __getattr__(name: str) -> Any:
 
 def __dir__() -> list[str]:
     """The module's names plus the ones resolved on first use, so ``dir()`` and completion see them."""
-    return sorted(set(globals()) | _FENCING | _MODEL)
+    return sorted(set(globals()) | _FENCING | _MODEL | {"CompiledModel"})
 
 
 __all__ = [
@@ -184,6 +190,7 @@ __all__ = [
     "NpuCompileSettings",
     "NpuFamily",
     "NpuReferenceEnergy",
+    "NpuRequirement",
     "PmuProgram",
     "PreparationError",
     "PreparationRecord",
