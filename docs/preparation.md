@@ -36,6 +36,9 @@ prepared = prepare_model(request)
 print(prepared.tflite)
 print(prepared.record_path)
 print(prepared.info.custom_operators)
+print(prepared.compilation.summary)  # typed VelaSummary, already parsed
+print(prepared.compilation.summary_path)
+print(prepared.compiler_log)
 ```
 
 The policy in this example is an explicit AT110 **simulation/compiler assumption**,
@@ -57,6 +60,30 @@ separately from the requested settings and decoded per-region identities.
 The executable hash identifies the launcher bytes; recorded Python package
 versions describe the preparing environment, not a cryptographic identity for an
 external compiler's complete installation.
+
+`prepared.compilation` is the final `CompiledModel` from the existing compiler API,
+including its generated `config_file`, `summary_path`, typed `summary` and captured
+`stdout`. `compiler_log` identifies that compilation's saved output. These paths
+refer to the current preparation directory; they do not trigger another compile.
+After relocation, use the retained record's artifact paths and inspection API.
+
+## CPU-only compiler output
+
+Preparation requires at least one Ethos-U region by default. Consumers that also
+handle CPU-only models can explicitly allow a successful compile without one:
+
+```python
+from dataclasses import replace
+from helia_ethos import NpuRequirement
+
+request = replace(request, npu_requirement=NpuRequirement.OPTIONAL)
+prepared = prepare_model(request)
+```
+
+This option allows zero regions; it does not promise NPU coverage or change Vela's
+operator support. Compatibility is `unknown` for zero regions. A decoded region
+with the wrong accelerator is still refused. The record retains this policy so
+inspection applies the same rule without recompilation.
 
 ## Optional fences
 
@@ -106,10 +133,12 @@ region disagrees, compatible only if every region is decoded and agrees, and
 unknown otherwise. A retained compiler request is separate evidence from decoded
 payload identity. Inspection does not invoke Vela or imply runtime qualification.
 
-The version-1 `PreparationRecord` records source identity, target identity,
+The version-2 `PreparationRecord` records the NPU requirement alongside source identity, target identity,
 compiler inputs, model I/O and custom-op requirements, per-region observations,
 fence correspondence, package versions and artifact hashes. JSON fields are
-closed and typed; unknown record schema versions are refused.
+closed and typed; unknown record schema versions are refused. Version-1 records
+remain readable with their original required-NPU semantics; they cannot opt into
+CPU-only output.
 
 Retain `preparation.json` and all artifacts marked `required`: the final model,
 compiler configuration and any fence sidecar needed for correspondence. Preserve
@@ -131,7 +160,8 @@ workspace to verify the retained closure.
 - `CompilerUnavailable`: Vela cannot be located or identified.
 - `CompilationFailed`: Vela fails or cannot produce its expected files.
 - `InvalidPreparedArtifact`: required retained files are missing/mismatched, the
-  result has no NPU region, its decoded accelerator disagrees, or fence mapping fails.
+  result has no NPU region when required, its decoded accelerator disagrees, or
+  fence mapping fails.
 
 The source is never overwritten. Preparation reserves a fresh destination and
 cleans its private scratch directory. Failures after reservation leave

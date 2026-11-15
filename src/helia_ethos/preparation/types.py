@@ -5,14 +5,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from ..catalog import CatalogNpuFacts
 from ..catalog_identity import CatalogContentIdentity
 from ..model import ModelTensor
 from ..soc import MemoryPlacement, NpuFamily, SocDefinition, TimingOverrides
+
+if TYPE_CHECKING:
+    from ..vela import CompiledModel
 
 
 class PreparationError(ValueError):
@@ -90,6 +93,13 @@ class BudgetFences:
 FenceSelection = ExplicitFences | BudgetFences
 
 
+class NpuRequirement(StrEnum):
+    """Whether a successful compile must contain an Ethos-U region."""
+
+    REQUIRED = "required"
+    OPTIONAL = "optional"
+
+
 @dataclass(frozen=True)
 class PrepareRequest:
     """Prepare one original model in a fresh, caller-owned directory."""
@@ -100,6 +110,7 @@ class PrepareRequest:
     output_dir: Path
     fences: FenceSelection | None = None
     retain_source: bool = False
+    npu_requirement: NpuRequirement = NpuRequirement.REQUIRED
 
 
 class ArtifactRole(StrEnum):
@@ -204,7 +215,8 @@ class PackageVersion(RecordValue):
 class PreparationRecord(RecordValue):
     """Versioned compilation evidence; not a measurement or execution bundle."""
 
-    schema_version: Literal[1] = 1
+    schema_version: Literal[1, 2] = 2
+    npu_requirement: NpuRequirement = NpuRequirement.REQUIRED
     source_sha256: Sha256
     target: TargetEvidence
     compiler: CompileEvidence
@@ -215,6 +227,12 @@ class PreparationRecord(RecordValue):
     custom_operators: tuple[CustomOperator, ...]
     inputs: tuple[ModelTensor, ...]
     outputs: tuple[ModelTensor, ...]
+
+    @model_validator(mode="after")
+    def _version_policy(self) -> PreparationRecord:
+        if self.schema_version == 1 and self.npu_requirement is not NpuRequirement.REQUIRED:
+            raise ValueError("Preparation record version 1 requires Ethos-U regions")
+        return self
 
 
 @dataclass(frozen=True)
@@ -246,3 +264,5 @@ class PreparedModel:
     tflite: Path
     record_path: Path
     info: PreparedModelInfo
+    compilation: CompiledModel
+    compiler_log: Path

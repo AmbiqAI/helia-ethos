@@ -23,6 +23,7 @@ from helia_ethos import (
     MemoryPlacement,
     NpuCompileSettings,
     NpuFamily,
+    NpuRequirement,
     PrepareRequest,
     inspect_prepared_model,
     load_soc,
@@ -142,11 +143,17 @@ def test_budget_plan_and_compile_count(request_model: PrepareRequest, tmp_path: 
     source = write_add_chain_model(tmp_path / "four.tflite", num_ops=4)
     prepared = prepare_model(replace(request_model, source=source, fences=BudgetFences(1)))
     assert len(calls) == 2
+    assert prepared.compilation.tflite == prepared.tflite
+    assert prepared.compiler_log.read_text() == prepared.compilation.stdout
     assert len(prepared.info.regions) == 4
     assert prepared.info.record is not None and prepared.info.record.fences is not None
     assert prepared.info.record.fences.matched_cycles is not None
     calls.clear()
-    prepare_model(replace(request_model, source=source, fences=BudgetFences(10**12), output_dir=tmp_path / "one"))
+    uncut = prepare_model(
+        replace(request_model, source=source, fences=BudgetFences(10**12), output_dir=tmp_path / "one")
+    )
+    assert uncut.compilation.tflite == uncut.tflite
+    assert uncut.compiler_log.read_text() == uncut.compilation.stdout
     assert len(calls) == 1
 
 
@@ -233,8 +240,10 @@ def test_inspection_all_regions_and_unknown_payload(add_chain_model: Path, produ
     assert info.compatibility(Accelerator(family, macs * 2)) == AcceleratorCompatibility.INCOMPATIBLE
 
 
+@pytest.mark.parametrize("policy", list(NpuRequirement))
 @pytest.mark.parametrize("change", ["no_npu", "wrong_accelerator", "unknown_payload"])
-def test_final_model_admission(request_model: PrepareRequest, monkeypatch, change: str) -> None:
+def test_final_model_admission(request_model: PrepareRequest, monkeypatch, change: str, policy: NpuRequirement) -> None:
+    request_model = replace(request_model, npu_requirement=policy)
     from ai_edge_litert.tools import flatbuffer_utils
 
     implementation = importlib.import_module("helia_ethos.preparation.prepare")
@@ -259,7 +268,9 @@ def test_final_model_admission(request_model: PrepareRequest, monkeypatch, chang
         return compiled
 
     monkeypatch.setattr(implementation, "compile_for_target", altered)
-    if change == "unknown_payload":
+    if change == "no_npu" and policy is NpuRequirement.OPTIONAL:
+        assert not prepare_model(request_model).info.regions
+    elif change == "unknown_payload":
         prepared = prepare_model(request_model)
         assert prepared.info.compatibility(Accelerator(NpuFamily.ETHOS_U85, 256)) == AcceleratorCompatibility.UNKNOWN
         assert inspect_prepared_model(prepared.record_path).regions[0].accelerator is None
@@ -372,3 +383,94 @@ def test_compiler_diagnostics_survive_failure(request_model: PrepareRequest, mon
     log = (request_model.output_dir / "compiled/compiler.log").read_text()
     assert "early stdout" in log and "first error" in log
     assert not (request_model.output_dir / "preparation.json").exists()
+
+
+def test_compile_result_is_reusable_without_another_compile(request_model: PrepareRequest, monkeypatch) -> None:
+    """Consumers receive the final typed result, including retained diagnostic paths."""
+    from helia_ethos.vela import parse_vela_summary
+
+    implementation = importlib.import_module("helia_ethos.preparation.prepare")
+    original = implementation.compile_for_target
+    results = []
+
+    def capture(*args, **kwargs):
+        result = original(*args, **kwargs)
+        results.append(result)
+        return result
+
+    monkeypatch.setattr(implementation, "compile_for_target", capture)
+    prepared = prepare_model(request_model)
+    assert results == [prepared.compilation]
+    assert prepared.compilation.tflite == prepared.tflite
+    assert prepared.compilation.summary == parse_vela_summary(prepared.compilation.summary_path)
+    assert prepared.compiler_log.read_text() == prepared.compilation.stdout
+    assert prepared.compilation.config_file.is_file()
+    assert prepared.compilation.summary_path.is_relative_to(request_model.output_dir)
+
+
+def test_cpu_only_policy_and_retained_record(request_model: PrepareRequest, tmp_path: Path, monkeypatch) -> None:
+    """A real CPU-only compile succeeds only when opted in and remains honest after relocation."""
+    from ai_edge_litert import schema_py_generated as schema
+    from ai_edge_litert.tools import flatbuffer_utils
+
+    from conftest import write_add_chain_model
+    from helia_ethos import NpuRequirement
+
+    source = write_add_chain_model(tmp_path / "cpu.tflite", num_ops=1)
+    model: Any = flatbuffer_utils.read_model_from_bytearray(source.read_bytes())
+    model.operatorCodes[0].builtinCode = schema.BuiltinOperator.SIN
+    model.operatorCodes[0].deprecatedBuiltinCode = schema.BuiltinOperator.SIN
+    for tensor in model.subgraphs[0].tensors:
+        tensor.type = schema.TensorType.FLOAT32
+        tensor.quantization = None
+    op = model.subgraphs[0].operators[0]
+    op.inputs = [0]
+    op.builtinOptionsType = schema.BuiltinOptions.NONE
+    op.builtinOptions = None
+    flatbuffer_utils.write_model(model, str(source))
+    with pytest.raises(InvalidPreparedArtifact, match="no compiled Ethos-U"):
+        prepare_model(replace(request_model, source=source))
+
+    implementation = importlib.import_module("helia_ethos.preparation.prepare")
+    original = implementation.compile_for_target
+    calls = []
+
+    def capture(*args, **kwargs):
+        calls.append(args[0])
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(implementation, "compile_for_target", capture)
+    output = tmp_path / "cpu-prepared"
+    prepared = prepare_model(
+        replace(request_model, source=source, output_dir=output, npu_requirement=NpuRequirement.OPTIONAL)
+    )
+    assert len(calls) == 1
+    assert prepared.info.regions == ()
+    assert prepared.info.compatibility(Accelerator(NpuFamily.ETHOS_U85, 256)) is AcceleratorCompatibility.UNKNOWN
+    assert prepared.info.record is not None and prepared.info.record.schema_version == 2
+    assert prepared.compilation.summary_path.is_file()
+    relocated = tmp_path / "moved"
+    shutil.copytree(output, relocated)
+    shutil.rmtree(output)
+    source.unlink()
+    info = inspect_prepared_model(relocated / "preparation.json")
+    assert info.regions == ()
+    record = json.loads((relocated / "preparation.json").read_text())
+    record["npu_requirement"] = "required"
+    (relocated / "preparation.json").write_text(json.dumps(record))
+    with pytest.raises(InvalidPreparedArtifact, match="no Ethos-U"):
+        inspect_prepared_model(relocated / "preparation.json")
+
+
+def test_version_one_record_remains_npu_required(request_model: PrepareRequest) -> None:
+    """Version-one records remain readable under their original strict NPU contract."""
+    prepared = prepare_model(request_model)
+    data = json.loads(prepared.record_path.read_text())
+    data["schema_version"] = 1
+    del data["npu_requirement"]
+    prepared.record_path.write_text(json.dumps(data))
+    assert inspect_prepared_model(prepared.record_path).regions
+    data["npu_requirement"] = "optional"
+    prepared.record_path.write_text(json.dumps(data))
+    with pytest.raises(InvalidPreparedArtifact, match="version 1 requires"):
+        inspect_prepared_model(prepared.record_path)
