@@ -473,7 +473,9 @@ def rewrite_model_with_fences(
     Returns None if mode is 'off' or no boundaries needed.
     """
     litert_schema()  # a missing extra is reported by name, before any file is touched
-    model = flatbuffer_utils.read_model(str(model_path))
+    # Own the bytes so the rewritten graph cannot keep the source mapped/open
+    # when a caller cleans its preparation workspace (particularly on Windows).
+    model = flatbuffer_utils.read_model_from_bytearray(model_path.read_bytes())
     subgraph = _primary_subgraph(model, model_path)
     num_ops = len(subgraph.operators)
 

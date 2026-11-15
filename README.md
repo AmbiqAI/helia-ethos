@@ -13,7 +13,9 @@ its consumers.
 
 The proposed [extraction and preparation contract](docs/extraction_contract.md)
 defines ownership, the planned consumer API and the implementation sequence.
-Its proposed API is not shipped yet.
+The shared API is described in [model preparation and inspection](docs/preparation.md).
+Use it for retained compilation evidence and optional fences; the low-level APIs
+below remain available.
 
 ## Install
 
