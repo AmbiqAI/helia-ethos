@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from helia_npu.soc_schema import load_soc
-from helia_npu.target import Feature, TargetError, TargetKind, list_targets, load_target
+from helia_ethos.soc_schema import load_soc
+from helia_ethos.target import Feature, TargetError, TargetKind, list_targets, load_target
 
 
 class TestPackagedTargets:
@@ -39,7 +39,7 @@ class TestPackagedTargets:
         assert fvp.fvp_subsystem == "corstone_320"  # helx refuses to attribute a Corstone-300 run to it
 
     def test_only_a_simulator_names_a_corstone(self) -> None:
-        from helia_npu.target import validate_target_document
+        from helia_ethos.target import validate_target_document
 
         document = {"id": "x", "soc": "atomiq110", "kind": "fpga", "name": "X", "fvp_subsystem": "corstone_320"}
         with pytest.raises(TargetError, match="only a simulator target has; this one is fpga"):

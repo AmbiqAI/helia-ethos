@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from conftest import flatbuffer_utils, schema
-from helia_npu.vela.static_shapes import has_ethosu_stream, specialize_ethosu_output_shapes
+from helia_ethos.vela.static_shapes import has_ethosu_stream, specialize_ethosu_output_shapes
 
 
 @pytest.mark.parametrize("legacy", [False, True])

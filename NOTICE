@@ -1,4 +1,4 @@
-helia-npu
+helia-ethos
 Copyright (c) 2026 Ambiq Micro, Inc. All rights reserved.
 
 Ambiq's code is provided under the Evaluation Source License in LICENSE.
@@ -8,6 +8,6 @@ The core package depends on Pydantic and PyYAML (MIT). The models extra uses
 Google's LiteRT (Apache-2.0); the vela extra uses Arm's Ethos-U Vela compiler
 (Apache-2.0). Their transitive dependencies and notices retain their own terms.
 
-The paired heliaEstimator release includes frozen runtime requirements and a
-platform-labelled third-party inventory with upstream licence/notice files.
-See docs/third_party.md in the source archive for runtime, FVP and model terms.
+helia-platforms supplies hardware catalog facts under its own licence.
+This distribution does not bundle Arm FVP binaries, firmware runtimes, model
+weights or HELX energy profiles. Consumers distribute their own runtime notices.

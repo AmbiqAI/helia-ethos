@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from helia_npu.vela import (
+from helia_ethos.vela import (
     TFLiteOp,
     index_by_output_name,
     match_original_op,

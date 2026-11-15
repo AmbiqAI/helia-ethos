@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from helia_npu.soc import MemoryPlacement
-from helia_npu.soc_schema import load_soc
-from helia_npu.vela import system_config_name_for, write_system_config
+from helia_ethos.soc import MemoryPlacement
+from helia_ethos.soc_schema import load_soc
+from helia_ethos.vela import system_config_name_for, write_system_config
 
 
 def _lines(path: Path) -> list[str]:
@@ -46,8 +46,8 @@ def test_ulp_system_config(at110_soc_file: Path, tmp_path: Path) -> None:
 
 def _single_port(soc):
     """The test SoC with one SRAM port declared; memory overrides must be complete definitions."""
-    from helia_npu import derive_soc
-    from helia_npu.soc_schema import SocOverridesModel
+    from helia_ethos import derive_soc
+    from helia_ethos.soc_schema import SocOverridesModel
 
     ssram = soc.memories["ssram"].params
     single = {
@@ -79,8 +79,8 @@ def test_hp_system_config_presents_port1_no_slower_than_port0(at110_soc_file: Pa
 
 def test_a_rate_limited_port1_is_not_clamped(tmp_path: Path) -> None:
     """A port-1 memory no deeper than port 0 cannot hide latency; streaming from it is not known to help."""
-    from helia_npu import derive_soc
-    from helia_npu.soc_schema import SocOverridesModel
+    from helia_ethos import derive_soc
+    from helia_ethos.soc_schema import SocOverridesModel
 
     rram = derive_soc(
         load_soc("atomiq110"),
@@ -130,7 +130,7 @@ def test_ulp_system_config_keeps_physical_port1_latency(at110_soc_file: Path, tm
 
 def test_an_explicit_port1_override_is_not_clamped(at110_soc_file: Path, tmp_path: Path) -> None:
     """A sweep that sets port-1 timing on purpose must reach Vela as written, even at HP."""
-    from helia_npu.soc import MemoryTimingOverride, TimingOverrides
+    from helia_ethos.soc import MemoryTimingOverride, TimingOverrides
 
     out = tmp_path / "vela.ini"
     overrides = TimingOverrides(
@@ -182,7 +182,7 @@ def test_a_placement_given_only_as_an_extra_decides_the_port_occupant(tmp_path: 
 def test_extras_that_disagree_about_a_port_need_an_explicit_placement(tmp_path: Path) -> None:
     import pytest
 
-    from helia_npu.soc import SocError
+    from helia_ethos.soc import SocError
 
     soc = load_soc("atomiq110")
     extras = [MemoryPlacement(const=m, arena="ssram", cache="ssram") for m in ("psram", "rram")]
@@ -194,7 +194,7 @@ def test_extras_that_disagree_about_a_port_need_an_explicit_placement(tmp_path: 
 
 def test_a_derived_port1_override_keeps_the_clamp(at110_soc_file: Path, tmp_path: Path) -> None:
     """An override a tool derived (deliberate=False), such as emulated application traffic, is no sweep of port 1."""
-    from helia_npu.soc import MemoryTimingOverride, TimingOverrides
+    from helia_ethos.soc import MemoryTimingOverride, TimingOverrides
 
     out = tmp_path / "vela.ini"
     overrides = TimingOverrides(memories={"hblram": MemoryTimingOverride(bandwidth=0.375, deliberate=False)})

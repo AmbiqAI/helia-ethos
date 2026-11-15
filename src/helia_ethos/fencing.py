@@ -17,7 +17,7 @@ Three layers, each usable alone:
   the ops into the flatbuffer and write a boundaries sidecar.
 
 Fence positions are original TFLite operator indices, the same coordinates
-:func:`helia_npu.vela.match_original_op` produces.
+:func:`helia_ethos.vela.match_original_op` produces.
 """
 
 from __future__ import annotations

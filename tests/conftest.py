@@ -63,7 +63,7 @@ def write_conv_model(path: Path, *, with_command_stream: bool = True) -> Path:
     _need_models_extra()
     model = schema.ModelT()
     model.version = 3
-    model.description = b"helia-npu test model"
+    model.description = b"helia-ethos test model"
     model.buffers = [
         _buffer(None),  # 0: the empty sentinel buffer
         _buffer(None),  # 1: input (no data)
@@ -161,7 +161,7 @@ def write_add_chain_model(path: Path, num_ops: int = 2) -> Path:
     """A chain of int8 ADDs Vela compiles for the Ethos-U (no weights, elementwise)."""
     model = schema.ModelT()
     model.version = 3
-    model.description = b"helia-npu add chain"
+    model.description = b"helia-ethos add chain"
     model.buffers = [_buffer(None) for _ in range(num_ops + 2)]
     oc = schema.OperatorCodeT()
     oc.builtinCode = schema.BuiltinOperator.ADD

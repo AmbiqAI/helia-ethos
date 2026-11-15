@@ -72,7 +72,7 @@ def _port1_latency_clamp(ports: Mapping[int, MemoryTiming], overrides: TimingOve
     return (
         f"; Port 1 ({port1.name}) latency is presented as no worse than port 0 ({port0.name}): port 0 delivers "
         f"{port0.bandwidth:g} of the NPU's demand in this mode, so it is bandwidth-bound and latency alone should not "
-        "steer Vela toward caching weights through it. See helia_npu.vela.system_config."
+        "steer Vela toward caching weights through it. See helia_ethos.vela.system_config."
     )
 
 

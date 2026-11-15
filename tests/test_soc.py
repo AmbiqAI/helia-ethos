@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from helia_npu.soc import (
+from helia_ethos.soc import (
     MemoryPlacement,
     MemoryTimingOverride,
     ProvenanceStatus,
@@ -18,7 +18,7 @@ from helia_npu.soc import (
     parse_memory_placement,
     standard_vela_mode,
 )
-from helia_npu.soc_schema import list_socs, load_soc
+from helia_ethos.soc_schema import list_socs, load_soc
 
 
 class TestLoad:
@@ -168,20 +168,20 @@ class TestDeriveSoc:
     """A what-if or variant is the golden definition plus a diff, never a copy."""
 
     def test_identity_only_keeps_the_origin(self) -> None:
-        from helia_npu.soc_schema import SocOverridesModel, derive_soc
+        from helia_ethos.soc_schema import SocOverridesModel, derive_soc
 
         base = load_soc("atomiq110")
         soc = derive_soc(base, SocOverridesModel(id="atomiq110-alias", name="Alias"))
         assert soc.origin is base.origin and soc.memories == base.memories and soc.id == "atomiq110-alias"
 
     def test_hardware_change_makes_it_derived(self) -> None:
-        from helia_npu.soc_schema import SocOverridesModel, derive_soc
+        from helia_ethos.soc_schema import SocOverridesModel, derive_soc
 
         soc = derive_soc(load_soc("atomiq110"), SocOverridesModel(id="x", macs=1024))
         assert soc.origin is SocOrigin.DERIVED and soc.macs == 1024
 
     def test_memory_replace_and_remove(self) -> None:
-        from helia_npu.soc_schema import MemoryModel, SocOverridesModel, derive_soc
+        from helia_ethos.soc_schema import MemoryModel, SocOverridesModel, derive_soc
 
         psram = MemoryModel(
             axi_port=1,
@@ -197,13 +197,13 @@ class TestDeriveSoc:
         assert soc.provenance_label("memories.hblram") == "No provenance recorded"
 
     def test_removing_an_unknown_memory_fails(self) -> None:
-        from helia_npu.soc_schema import SocOverridesModel, derive_soc
+        from helia_ethos.soc_schema import SocOverridesModel, derive_soc
 
         with pytest.raises(SocError, match="no such memory"):
             derive_soc(load_soc("atomiq110"), SocOverridesModel(memories={"mram": None}))
 
     def test_a_second_memory_on_a_port_is_allowed_but_port_0_is_required(self) -> None:
-        from helia_npu.soc_schema import MemoryModel, SocOverridesModel, derive_soc
+        from helia_ethos.soc_schema import MemoryModel, SocOverridesModel, derive_soc
 
         clash = MemoryModel(
             axi_port=0, axi_clock_hz=1e6, read_latency_ns=1, write_latency_ns=1, max_outstanding=1, burst_length=1
@@ -259,7 +259,7 @@ class TestProvenanceVocabulary:
             load_soc(path)
 
     def test_least_trusted_orders_the_vocabulary(self) -> None:
-        from helia_npu.soc import least_trusted
+        from helia_ethos.soc import least_trusted
 
         assert least_trusted([ProvenanceStatus.CONFIRMED, ProvenanceStatus.FITTED]) is ProvenanceStatus.FITTED
         assert least_trusted([ProvenanceStatus.UNVERIFIED, ProvenanceStatus.CONFIRMED]) is ProvenanceStatus.UNVERIFIED
@@ -275,7 +275,7 @@ class TestStrictYaml:
             load_soc(path)
 
     def test_every_packaged_soc_and_target_loads_strictly(self) -> None:
-        from helia_npu.target import list_targets, load_target
+        from helia_ethos.target import list_targets, load_target
 
         for soc_id in list_socs():
             load_soc(soc_id)
@@ -300,7 +300,7 @@ class TestAxiBeatWidth:
             load_soc(path)
 
     def test_an_override_that_changes_the_npu_takes_its_width(self) -> None:
-        from helia_npu.soc_schema import SocOverridesModel, derive_soc
+        from helia_ethos.soc_schema import SocOverridesModel, derive_soc
 
         base = load_soc("atomiq110")
         assert derive_soc(base, SocOverridesModel(id="u55", npu="ethos-u55", macs=128)).axi_bus_width_bits == 64
@@ -310,7 +310,7 @@ class TestAxiBeatWidth:
 
 
 def test_axi_max_beats_code_maps_the_ethos_u_bursts_and_refuses_others() -> None:
-    from helia_npu.soc import axi_max_beats_code
+    from helia_ethos.soc import axi_max_beats_code
 
     assert [axi_max_beats_code(b) for b in (64, 128, 256)] == [0, 1, 2]
     with pytest.raises(ValueError, match="512 B is not a split the Ethos-U NPUs support"):
@@ -356,7 +356,7 @@ memories:
         assert (ta[0].max_transactions, ta[0].write_transactions) == (8, 8)
 
     def test_a_write_limit_reaches_the_adapter_and_vela(self, tmp_path) -> None:
-        from helia_npu.vela.system_config import write_system_config
+        from helia_ethos.vela.system_config import write_system_config
 
         soc = self._soc(tmp_path, "    max_outstanding_writes: 4")
         hp = derive_timing(soc, "HP")

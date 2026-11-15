@@ -3,8 +3,8 @@
 import pytest
 from helia_platforms import builtin, load_overlay
 
-from helia_npu.catalog import CatalogMemoryPath, read_catalog_npu
-from helia_npu.soc import SocError
+from helia_ethos.catalog import CatalogMemoryPath, read_catalog_npu
+from helia_ethos.soc import SocError
 
 
 def test_at110_preserves_facts_and_identity():

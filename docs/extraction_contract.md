@@ -1,4 +1,4 @@
-# helia-npu extraction and model-preparation contract
+# helia-ethos extraction and model-preparation contract
 
 Status: proposed. This document defines the next implementation steps; the new
 API names below are not shipped interfaces. The existing low-level APIs remain
@@ -20,26 +20,27 @@ No new repository or release is created by it.
 | Owner | Responsibilities |
 | --- | --- |
 | helia-platforms | Hardware facts and identities for SoCs, implementations, parts and boards; NPU geometry, reachability, capacities, addresses, clocks and source provenance. |
-| helia-npu | Ethos-U model inspection; compiler-facing projection of resolved facts; explicit Vela configuration and compilation; graph fencing and segment correspondence; NPU PMU definitions; reusable NPU timing/placement policy machinery and static Corstone capability descriptions. |
+| helia-ethos | Ethos-U model inspection; compiler-facing projection of resolved facts; explicit Vela configuration and compilation; graph fencing and segment correspondence; NPU PMU definitions; reusable NPU timing/placement policy machinery and static Corstone capability descriptions. |
 | HELX | Experiment preparation and orchestration; selection of calibrated simulation assumptions; host setup, runner builds, FVP launch, acquisition, calibration, energy, native results and visualization artifacts. |
 | heliaAOT | Conversion to its IR, operator admission, CPU kernels, memory planning, generated modules and Ethos-U invocation. Optional NPU preparation precedes conversion. |
 | HPX | Firmware integration, physical builds, flashing, acquisition, instrumentation, hardware-specific admission and native capture results. |
 | Runtime adapters | Registration and execution of Ethos-U and stream-split operators, with their buffer and driver contracts. |
 | BENCH | Experiment conditions and suites, calls to public producer APIs, evidence accounting, comparison eligibility and reports. |
 
-The dependency direction is `HELX / AOT / HPX -> helia-npu -> helia-platforms`.
+The dependency direction is `HELX / AOT / HPX -> helia-ethos -> helia-platforms`.
 Consumers can also read helia-platforms directly for their non-NPU needs.
-helia-npu never imports a consumer. RT's embedded C/C++ runtime does not acquire
+helia-ethos never imports a consumer. RT's embedded C/C++ runtime does not acquire
 a Python compiler dependency. No shared application scheduler or generic plugin
 framework is introduced.
 
 ### File disposition
 
-Paths are relative to `packages/helia-npu/` unless qualified.
+Paths are relative to this repository unless qualified. This contract originated
+in HELX PR #194; the preparation API below is planned, not yet implemented.
 
 | Existing area | Extraction disposition |
 | --- | --- |
-| `src/helia_npu/catalog.py` | Keep the caller-supplied catalog/NPU-fact reader. Do not create a second physical target catalog. |
+| `src/helia_ethos/catalog.py` | Keep the caller-supplied catalog/NPU-fact reader. Do not create a second physical target catalog. |
 | `catalog_loading.py`, `catalog_identity.py`, `catalog_policy.py` | Keep explicit source identity and projection machinery. Separate the existing AT110 simulation convenience path from preparation with caller-resolved facts and explicit compiler settings. |
 | `soc.py`, `soc_schema.py`, `socs/` | Keep compiler-facing types, custom what-if definitions and catalog-backed references. A `SocDefinition` is an effective compiler/model view, not a new authority for silicon facts. |
 | `model_policies/atomiq110.yaml` | Keep the versioned, explicitly selected policy initially. Its fitted settings remain modeling assumptions; HELX selects it for simulation. It must not become the default policy for FPGA preparation. |
@@ -86,8 +87,8 @@ prepare_model(request: PrepareRequest) -> PreparedModel
 inspect_prepared_model(path: Path) -> PreparedModelInfo
 ```
 
-Implement the public surface in `helia_npu.preparation`, re-exporting its public
-names from `helia_npu`. Use frozen dataclasses, enums and tuples for domain data;
+Implement the public surface in `helia_ethos.preparation`, re-exporting its public
+names from `helia_ethos`. Use frozen dataclasses, enums and tuples for domain data;
 use a versioned serialization boundary for the preparation record. Existing
 `compile_for_target`, `plan_fences`, `fence_model` and inspection functions remain
 available to callers that need individual steps.
@@ -218,7 +219,7 @@ exit the process, acquire devices or make installation/licence decisions.
 
 Keep model-reading and Vela dependencies optional, as the current extras do.
 `prepare_model()` requires both model and compiler capabilities, installed as
-`helia-npu[models,vela]` (or the existing `all` extra). Inspection requires only
+`helia-ethos[models,vela]` (or the existing `all` extra). Inspection requires only
 `models`; core types/catalog reads remain importable without either extra.
 Missing capabilities produce an actionable extra-installation error on use.
 AOT/HPX CPU-only use must not require installing the compiler. Test the actual
@@ -261,7 +262,7 @@ emit application module using AOT's memory plan and runtime bindings
 
 AOT owns the conversion workspace and preserves preparation evidence with its
 conversion artifacts. It preserves Vela's required arena-relative bindings;
-helia-npu does not assign the final application's tensor/code addresses.
+helia-ethos does not assign the final application's tensor/code addresses.
 A catalog region being NPU-reachable does not establish CPU access or placement
 support in AOT. Current AOT excludes AT110 HBLRAM from its catalog memory binding
 pending clarification; preparation must not silently override that restriction.

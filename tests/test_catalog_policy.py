@@ -7,11 +7,11 @@ import pytest
 from helia_platforms import builtin, load_overlay
 from helia_platforms.model import Provenance as CatalogProvenance
 
-from helia_npu.catalog import read_catalog_npu
-from helia_npu.catalog_policy import PortDefault, VelaPortClass, at110_model_policy, project_catalog_soc
-from helia_npu.soc import MemoryPlacement, SocError, SocOrigin, derive_timing
-from helia_npu.soc_schema import load_soc
-from helia_npu.vela import write_system_config
+from helia_ethos.catalog import read_catalog_npu
+from helia_ethos.catalog_policy import PortDefault, VelaPortClass, at110_model_policy, project_catalog_soc
+from helia_ethos.soc import MemoryPlacement, SocError, SocOrigin, derive_timing
+from helia_ethos.soc_schema import load_soc
+from helia_ethos.vela import write_system_config
 
 
 @pytest.fixture

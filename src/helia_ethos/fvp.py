@@ -189,7 +189,7 @@ def validate_fvp_runtime_engine(profile: FvpTargetProfile, runtime_engine: str) 
 
 
 def required_pmu_fields(profile: FvpTargetProfile, pmu_profile: str | None) -> tuple[str, ...]:
-    """Host-report fields the selected PMU program must emit; see :mod:`helia_npu.pmu`."""
+    """Host-report fields the selected PMU program must emit; see :mod:`helia_ethos.pmu`."""
     from .pmu import program_for
 
     return program_for(profile.npu_family, pmu_profile).required_fields

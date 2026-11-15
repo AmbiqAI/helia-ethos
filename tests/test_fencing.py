@@ -14,7 +14,7 @@ from ai_edge_litert import schema_py_generated as schema
 from ai_edge_litert.tools import flatbuffer_utils
 
 from conftest import INT8, _buffer, _tensor, write_add_chain_model
-from helia_npu.fencing import (
+from helia_ethos.fencing import (
     Fence,
     FenceBindingError,
     FenceBoundaries,
@@ -35,7 +35,7 @@ from helia_npu.fencing import (
     plan_fences,
     rewrite_model_with_fences,
 )
-from helia_npu.vela import LayerRow, TFLiteOp, read_tflite_graph
+from helia_ethos.vela import LayerRow, TFLiteOp, read_tflite_graph
 
 
 def _row(name: str, op_cycles: int) -> LayerRow:

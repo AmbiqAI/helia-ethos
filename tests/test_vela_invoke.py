@@ -9,8 +9,8 @@ from pathlib import Path
 
 import pytest
 
-from helia_npu.fvp import NpuFamily
-from helia_npu.vela import VelaError, VelaInvocation, accelerator_config, find_vela_binary, invoke_vela, vela_command
+from helia_ethos.fvp import NpuFamily
+from helia_ethos.vela import VelaError, VelaInvocation, accelerator_config, find_vela_binary, invoke_vela, vela_command
 
 
 class TestAcceleratorConfig:

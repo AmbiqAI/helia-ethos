@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from helia_npu.soc import Provenance, ProvenanceStatus
+from helia_ethos.soc import Provenance, ProvenanceStatus
 
 
 @dataclass(frozen=True)

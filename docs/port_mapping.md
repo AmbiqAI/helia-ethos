@@ -3,9 +3,9 @@
 The same two memory paths carry a different name at every layer between the
 Ethos-U85 and a result file. This page is the single place that joins them.
 Arm calls the two port classes `AXI_SRAM` and `AXI_EXT`; "SRAM-class" and
-"EXT-class" below mean those. `packages/helia-npu/tests/test_port_mapping_doc.py`
+"EXT-class" below mean those. `tests/test_port_mapping_doc.py`
 parses the first three tables and checks their rows against the constants in
-`helia_npu.soc`, `helia_npu.pmu` and `helia_npu.fvp`, so those tables cannot
+`helia_ethos.soc`, `helia_ethos.pmu` and `helia_ethos.fvp`, so those tables cannot
 drift from the code; the prose and the last table are documentation.
 
 ## The two port classes
