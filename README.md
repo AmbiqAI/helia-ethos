@@ -25,8 +25,8 @@ pip install 'helia-ethos[all]'
 ```
 
 The core uses pydantic, PyYAML and helia-platforms. A function behind an extra says so
-when the extra is missing (`pip install 'helia-ethos[models]'`). Python 3.11 or
-newer; the package ships `py.typed`.
+when the extra is missing (`pip install 'helia-ethos[models]'`). Python 3.11–3.13 are tested; optional extras also depend on upstream wheel
+availability. The package ships `py.typed`.
 
 ## What is in it
 

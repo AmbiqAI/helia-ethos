@@ -39,6 +39,10 @@ jobs:
           version: '0.13.5'
           python-version: '3.12'
       - run: uv sync --frozen
+      - name: Verify release version
+        env:
+          RELEASE_TAG: ${{ needs.version.outputs.tag }}
+        run: uv run --frozen python -c "import os, helia_ethos; assert os.environ['RELEASE_TAG'] == 'v' + helia_ethos.__version__"
       - run: uv run --frozen python scripts/gates.py
       - run: uv run --frozen python scripts/check_distribution.py
       - uses: pypa/gh-action-pypi-publish@release/v1

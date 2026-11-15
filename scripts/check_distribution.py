@@ -30,7 +30,7 @@ def main() -> None:
         assert len(wheels) == len(sdists) == 1
         wheel = wheels[0]
         constraints = work / "constraints.txt"
-        run("uv", "export", "--frozen", "--all-extras", "--no-dev", "--no-emit-project",
+        run("uv", "export", "--frozen", "--all-extras", "--no-emit-project",
             "--no-hashes", "--output-file", str(constraints), cwd=root)
         venv = work / "venv"
         run("uv", "venv", "--python", sys.executable, str(venv))
