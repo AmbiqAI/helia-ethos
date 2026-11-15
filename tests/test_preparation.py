@@ -513,11 +513,11 @@ def test_cpu_only_unsigned_output_is_observed_not_rejected(request_model, tmp_pa
 
 
 def test_explicit_memory_mode_preserves_compiler_label(request_model):
-    settings = replace(request_model.settings, memory_mode="Dedicated_Sram")
+    settings = replace(request_model.settings, memory_mode="Shared_Sram")
     prepared = prepare_model(replace(request_model, settings=settings))
-    assert prepared.compilation.summary.raw["memory_mode"] == "Dedicated_Sram"
+    assert prepared.compilation.summary.raw["memory_mode"] == "Shared_Sram"
     assert prepared.info.record is not None
-    assert prepared.info.record.compiler.reported_memory_mode == "Dedicated_Sram"
+    assert prepared.info.record.compiler.reported_memory_mode == "Shared_Sram"
 
 
 def test_memory_mode_must_agree_with_placement(request_model):
