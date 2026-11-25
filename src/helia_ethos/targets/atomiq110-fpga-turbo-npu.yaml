@@ -6,11 +6,10 @@
 # 2:1 at HP); other bitstreams run slower, around 10 MHz, and a capture's clock
 # comes from its own record, not from this file. Memory looks relatively faster
 # than it will on the part, and stall behaviour does not transfer. Cycle counts
-# are exact for compute-bound work. Record the drop as build_id. The SDK's HAL
-# header sizes HBLRAM at 13 MiB; its intended realization is unresolved. Do not
-# infer an FPGA or silicon capacity from it. This NPU drop populates none of it
-# (see emulation below). The catalog correction and planned capacity options are
-# tracked in AmbiqAI/helia-platforms#167.
+# are exact for compute-bound work. Record the drop as build_id. The catalog's
+# 32 MiB silicon HBLRAM size is an unverified planning capacity
+# (AmbiqAI/helia-platforms#167), not an FPGA capacity. This NPU drop populates
+# none of it (see emulation below).
 id: atomiq110-fpga-turbo-npu
 soc: atomiq110
 kind: fpga
