@@ -157,8 +157,8 @@ The constraints the SoC model is built to are in [docs/soc_design_notes.md](http
 
 ## helia-platforms integration
 
-The adapter supports the released helia-platforms 0.3 series from PyPI.
-The development lock selects 0.3.0; installed wheels declare `>=0.3,<0.4`.
+The adapter supports helia-platforms 0.2.x and 0.3.x from PyPI.
+The development lock selects 0.3.0. Installed wheels declare `>=0.2,<0.4`.
 Refresh deliberately with `uv lock --upgrade-package helia-platforms` and
 validate the catalog integration before shipping the updated lock.
 
