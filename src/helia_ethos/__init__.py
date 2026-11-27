@@ -105,7 +105,7 @@ if TYPE_CHECKING:  # the names resolved by __getattr__, visible to type checkers
     from .model import ModelCharacterization, characterize_model, command_stream_bytes  # noqa: F401
     from .vela import CompiledModel as CompiledModel
 
-__version__ = "0.3.0"  # x-release-please-version
+__version__ = "0.4.0"  # x-release-please-version
 
 #: Names behind the ``models`` extra, resolved on first use; kept out of ``__all__`` so
 #: ``from helia_ethos import *`` works on a core-only install.
