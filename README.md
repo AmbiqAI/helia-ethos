@@ -157,8 +157,8 @@ The constraints the SoC model is built to are in [docs/soc_design_notes.md](http
 
 ## helia-platforms integration
 
-The adapter supports the released helia-platforms 0.2 series from PyPI.
-The development lock selects 0.2.0; installed wheels declare `>=0.2,<0.3`.
+The adapter supports helia-platforms 0.2.x and 0.3.x from PyPI.
+The development lock selects 0.3.0. Installed wheels declare `>=0.2,<0.4`.
 Refresh deliberately with `uv lock --upgrade-package helia-platforms` and
 validate the catalog integration before shipping the updated lock.
 
@@ -217,9 +217,10 @@ The standard reference now uses catalog hardware facts and the packaged
 unverified comparison assumption; it does not imply a populated catalog device.
 FPGA implementation policies and package extraction remain separate work.
 
-The pinned catalog still has the older access-port layout from before the #93
-split; the adapter does not interpret that field as placement policy. No
-helia-platforms repository changes are required for the current SoC projection.
+helia-platforms 0.3 removed the deprecated access `port` key (helia-platforms #159), so an
+overlay that still writes it no longer loads. The adapter never read that field
+as placement policy. No helia-platforms repository changes are required for the
+current SoC projection.
 
 HELX exposes both the standard reference and explicit catalog selection through its shared platform loader. See
 [the catalog integration guide](https://github.com/AmbiqAI/helia-estimator/blob/main/docs/platform_catalog.md) for configuration,

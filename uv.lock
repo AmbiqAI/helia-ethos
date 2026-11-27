@@ -147,7 +147,7 @@ requires-dist = [
     { name = "backports-strenum", marker = "extra == 'models'", specifier = "<1.3" },
     { name = "ethos-u-vela", marker = "extra == 'all'", specifier = ">=5.2.0" },
     { name = "ethos-u-vela", marker = "extra == 'vela'", specifier = ">=5.2.0" },
-    { name = "helia-platforms", specifier = ">=0.2,<0.3" },
+    { name = "helia-platforms", specifier = ">=0.2,<0.4" },
     { name = "pydantic", specifier = ">=2.11,<3" },
     { name = "pyyaml", specifier = ">=6.0.2" },
 ]
@@ -163,15 +163,15 @@ dev = [
 
 [[package]]
 name = "helia-platforms"
-version = "0.2.0"
+version = "0.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pyyaml" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fd/1a/86bc4c7b05a92a0bab47b798b31f363170f29a011345c097174632069838/helia_platforms-0.2.0.tar.gz", hash = "sha256:fb5523dbe9cac761044ad625f29801fe9a92d912ec65c8969f5398843cbb3c1a", size = 141236, upload-time = "2026-11-08T01:10:10.734Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/7f/01a4d1cb60b01fc146949d48a80bbf9a2083d3601686f35d7f621a81e542/helia_platforms-0.3.0.tar.gz", hash = "sha256:6b4afc2f05b180db200c91852b2ab77b578da44acd3bf38a42f298f1daa76b68", size = 152353, upload-time = "2026-11-24T21:38:32.296Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/61/5006538ce363dfd750ea0bd4a46b41d6d8092717318bca7a7f15358f3622/helia_platforms-0.2.0-py3-none-any.whl", hash = "sha256:0548f6ab11401cf745651d4356ec2a376e084a35698915e754c7bcba07b88f16", size = 168897, upload-time = "2026-11-08T01:10:09.014Z" },
+    { url = "https://files.pythonhosted.org/packages/67/85/9e0b0219c7e58ee8b6e52bf87d078a9132f6ac52b302ad743306ed4012e8/helia_platforms-0.3.0-py3-none-any.whl", hash = "sha256:a1988cf00db71382ece094207ac6d447c9db8784e58a5272766e19664d3db45c", size = 180416, upload-time = "2026-11-24T21:38:30.912Z" },
 ]
 
 [[package]]

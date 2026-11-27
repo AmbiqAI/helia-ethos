@@ -19,9 +19,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 
-# Stay within the catalog minor release validated by this adapter.
+# Stay within the catalog minor releases validated by this adapter.
 dependencies = [
-    "helia-platforms>=0.2,<0.3",
+    "helia-platforms>=0.2,<0.4",
     "pydantic>=2.11,<3",
     "pyyaml>=6.0.2",
 ]

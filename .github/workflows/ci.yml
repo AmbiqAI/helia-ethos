@@ -32,3 +32,8 @@ jobs:
       - run: uv sync --frozen
       - run: uv run --frozen python scripts/gates.py
       - run: uv run --frozen python scripts/check_distribution.py
+      - name: Test with the oldest supported helia-platforms
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.11'
+        run: |
+          uv pip install --python .venv -e . "helia-platforms==0.2.0"
+          uv run --no-sync python -m pytest -q
